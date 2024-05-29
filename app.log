@@ -1,0 +1,17 @@
+2024-05-29 23:39:23,096 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2024-05-29 23:39:23,096 - INFO - [33mPress CTRL+C to quit[0m
+2024-05-29 23:39:23,125 - INFO -  * Restarting with watchdog (windowsapi)
+2024-05-29 23:39:31,474 - WARNING -  * Debugger is active!
+2024-05-29 23:39:31,481 - INFO -  * Debugger PIN: 348-262-995
+2024-05-29 23:39:40,177 - INFO - 127.0.0.1 - - [29/May/2024 23:39:40] "GET /upload HTTP/1.1" 200 -
+2024-05-29 23:39:41,828 - INFO - 127.0.0.1 - - [29/May/2024 23:39:41] "GET /static/img/StudyBotbg.avif HTTP/1.1" 200 -
+2024-05-29 23:39:41,867 - INFO - 127.0.0.1 - - [29/May/2024 23:39:41] "GET /static/img/StudyBot.jpg HTTP/1.1" 200 -
+2024-05-29 23:39:42,692 - INFO - 127.0.0.1 - - [29/May/2024 23:39:42] "[36mGET /static/img/StudyBot.jpg HTTP/1.1[0m" 304 -
+2024-05-29 23:40:09,066 - INFO - 127.0.0.1 - - [29/May/2024 23:40:09] "POST /upload HTTP/1.1" 200 -
+2024-05-29 23:40:09,188 - INFO - 127.0.0.1 - - [29/May/2024 23:40:09] "GET /pdf_page/10840-001.pdf HTTP/1.1" 200 -
+2024-05-29 23:40:10,109 - INFO - 127.0.0.1 - - [29/May/2024 23:40:10] "GET /get_chat_history/1 HTTP/1.1" 200 -
+2024-05-29 23:40:10,163 - INFO - 127.0.0.1 - - [29/May/2024 23:40:10] "GET /static/pdfs/10840-001.pdf HTTP/1.1" 200 -
+2024-05-29 23:40:12,352 - INFO - 127.0.0.1 - - [29/May/2024 23:40:12] "[36mGET /static/img/StudyBot.jpg HTTP/1.1[0m" 304 -
+2024-05-29 23:41:38,857 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2024-05-29 23:41:38,944 - INFO - 127.0.0.1 - - [29/May/2024 23:41:38] "POST /get HTTP/1.1" 200 -

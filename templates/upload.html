@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBot - Chat with PDF</title>
+    <link rel="icon" type="image/jpg" href="{{ url_for('static', filename='img/StudyBot.jpg') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Poppins", sans-serif;
+        }
+
+        .chat-history-block-container {
+            max-height: 400px; /* Adjust the height as needed */
+            overflow-y: auto;
+        }
+
+        h1:where(.css-usln0u).ant-typography, div:where(.css-usln0u).ant-typography-h1, div:where(.css-usln0u).ant-typography-h1>textarea, :where(.css-usln0u).ant-typography h1 {
+            margin-bottom: 0.5em;
+            color: rgba(0, 0, 0, 0.88);
+            font-weight: 600;
+            font-size: 38px;
+            line-height: 1.2105263157894737;
+        }
+
+        .my-chats-container{
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 10px;
+        }
+
+        :where(.css-usln0u).ant-card-bordered {
+            border: 1px solid #f0f0f0;
+        }
+
+        :where(.css-usln0u).ant-card {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            color: rgba(0, 0, 0, 0.88);
+            font-size: 14px;
+            line-height: 1.5714285714285714;
+            list-style: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+            position: relative;
+            background: #ffffff;
+            border-radius: 8px;
+        }
+
+        .recent-chat {
+            display: flex;
+            flex-direction: column;
+            margin-top: 12px;
+        }
+
+        :where(.css-usln0u).ant-card .ant-card-head {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            min-height: 56px;
+            margin-bottom: -1px;
+            padding: 0 24px;
+            color: rgba(0, 0, 0, 0.88);
+            font-weight: 600;
+            font-size: 16px;
+            background: transparent;
+            border-bottom: 1px solid #f0f0f0;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        :where(.css-usln0u).ant-card [class^="ant-card"], :where(.css-usln0u).ant-card [class*=" ant-card"] {
+            box-sizing: border-box;
+        }
+
+        :where(.css-usln0u).ant-card .ant-card-head-wrapper {
+            width: 100%;
+            display: flex;
+            align-items: center;
+        }
+
+        :where(.css-usln0u).ant-card .ant-card-head-title {
+            display: inline-block;
+            flex: 1;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        :where(.css-usln0u).ant-card .ant-card-body {
+            padding: 24px;
+            border-radius: 0 0 8px 8px;
+        }
+
+        :where(.css-usln0u) a {
+            color: #1677ff;
+            text-decoration: none;
+            background-color: transparent;
+            outline: none;
+            cursor: pointer;
+            transition: color 0.3s;
+            -webkit-text-decoration-skip: objects;
+        }
+
+        :where(.css-usln0u).ant-typography {
+            color: rgba(0, 0, 0, 0.88);
+            word-break: break-word;
+            line-height: 1.5714285714285714;
+        }
+
+        :where(.css-usln0u).ant-typography {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        :where(.css-usln0u).ant-typography.ant-typography-secondary {
+            color: rgba(0, 0, 0, 0.45);
+        }
+
+        :where(.css-usln0u).ant-upload-wrapper {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            color: rgba(0, 0, 0, 0.88);
+            font-size: 14px;
+            line-height: 1.5714285714285714;
+            list-style: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+        }
+
+        :where(.css-usln0u).ant-upload-wrapper {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        :where(.css-usln0u).ant-upload-wrapper .ant-upload-drag {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.02);
+            border: 1px dashed #d9d9d9;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        :where(.css-usln0u).ant-upload-wrapper .ant-upload {
+            outline: 0;
+        }
+
+        :where(.css-usln0u).ant-upload-wrapper .ant-upload-drag:hover{
+            border-color: #1677ff;
+        }
+
+        :where(.css-usln0u).ant-upload-wrapper [class^="ant-upload"], :where(.css-usln0u).ant-upload-wrapper [class*=" ant-upload"] {
+            box-sizing: border-box;
+        }
+
+        :where(.css-usln0u).ant-upload-wrapper .ant-upload-drag .ant-upload-btn {
+            display: table;
+            width: 100%;
+            height: 100%;
+            outline: none;
+            border-radius: 8px;
+        }
+
+        :where(.css-usln0u).ant-upload-wrapper .ant-upload-drag .ant-upload {
+            padding: 16px;
+        }
+
+        :where(.css-usln0u).ant-upload-wrapper .ant-upload-drag .ant-upload-drag-container {
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        :where(.css-usln0u).ant-upload-wrapper .ant-upload-drag p.ant-upload-drag-icon {
+            margin-bottom: 16px;
+        }
+
+        :where(.css-usln0u).ant-upload-wrapper .ant-upload-drag p.ant-upload-drag-icon .anticon {
+            color: #1677ff;
+            font-size: 48px;
+        }
+
+        :where(.css-usln0u).ant-upload-wrapper .ant-upload input[type='file'] {
+            cursor: pointer;
+        }
+
+        :where(.css-usln0u).ant-upload-wrapper .ant-upload-drag p.ant-upload-text {
+            margin: 0 0 4px;
+            color: rgba(0, 0, 0, 0.88);
+            font-size: 16px;
+        }
+
+        .anticon {
+            display: inline-flex;
+            align-items: center;
+            color: inherit;
+            font-style: normal;
+            line-height: 0;
+            text-align: center;
+            text-transform: none;
+            vertical-align: -0.125em;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .anticon svg {
+            display: inline-block;
+        }
+
+        .anticon svg {
+            display: inline-block;
+        }
+
+        .anticon >* {
+            line-height: 1;
+        }
+
+        .anticon > * {
+            line-height: 1;
+        }
+
+        .see-more {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .see-more a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .see-more a:hover {
+            text-decoration: underline;
+        }
+
+        .recent-chat.deleting {
+            position: relative;
+            opacity: 0.5;
+        }
+
+        .recent-chat.deleting::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ccc;
+            border-top-color: #333;
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        @media (min-width: 560px) {
+            .chat-history-block-container {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                grid-gap: 24px;
+                gap: 24px;
+            }
+        }
+
+        @media (min-width: 560px) {
+            .mobile-only {
+                display: none;
+            }
+        }
+
+        @media (min-width: 560px) {
+            .desktop-only {
+                display: block;
+            }
+        }
+
+        @media (min-width: 560px) {
+            .blocks-responsive {
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .blocks-responsive, .jenni-banner {
+                flex-direction: column;
+            }
+        }
+        @media (max-width: 560px) {
+            .blocks-responsive {
+                align-items: center;
+                width: 100%;
+                gap: 0;
+            }
+        }
+
+        @keyframes ellipsis {
+            0% {
+                content: "";
+            }
+            25% {
+                content: ".";
+            }
+            50% {
+                content: "..";
+            }
+            75% {
+                content: "...";
+            }
+        }
+
+        #ellipsis::after {
+            content: "";
+            animation: ellipsis 1.5s infinite;
+        }
+
+        #dots::after {
+            content: "";
+            animation: ellipsis 1.5s infinite;
+        }
+
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            
+            tippy.delegate('body', {
+                target: '[data-title]',
+                content: reference => reference.getAttribute('data-title'),
+                arrow: true,
+                delay: [50, 0], // Delay in showing and hiding the tooltip
+                animation: 'scale' // Animation effect
+            });
+
+            const dropBox = document.querySelector('.ant-upload-drag');
+            const form = document.querySelector('form');
+            const loadingMessage = document.getElementById('loading-message');
+            const endText = document.getElementById('just-end-text');
+            const deleteIcons = document.querySelectorAll('.delete-icon');
+
+            dropBox.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropBox.classList.add('highlight');
+            });
+
+            dropBox.addEventListener('dragleave', () => {
+                dropBox.classList.remove('highlight');
+            });
+
+            dropBox.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropBox.classList.remove('highlight');
+                const file = e.dataTransfer.files[0];
+                if (file.type === 'application/pdf') {
+                    form.style.display = 'none';
+                    loadingMessage.style.display = 'block';
+                    simulateProcessing();
+                } else {
+                    showError("Only PDF files are accepted. Please try again.");
+                }
+            });
+
+            form.querySelector('input[type="file"]').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file.type === 'application/pdf') {
+                    form.style.display = 'none';
+                    loadingMessage.style.display = 'block';
+                    simulateProcessing();
+                } else {
+                    showError("Only PDF files are accepted. Please try again.");
+                }
+            });
+
+            function simulateProcessing() {
+                const words = ["Analyzing", "Processing", "Inspecting", "Verifying", "Checking"];
+                const loadingText = document.getElementById('loading-text');
+                let index = 0;
+                const interval = setInterval(() => {
+                    loadingText.textContent = words[index];
+                    loadingText.style.color = getRandomColor();
+                    index = (index + 1) % words.length;
+                }, 500);
+                setTimeout(() => {
+                    clearInterval(interval);
+                    // Instead of form.submit(); make an AJAX request to upload the file
+                    uploadFile();
+                }, 5000); // Simulated processing time
+            }
+
+            function getRandomColor() {
+                const letters = '0123456789ABCDEF';
+                let color = '#';
+                for (let i = 0; i < 6; i++) {
+                    color += letters[Math.floor(Math.random() * 16)];
+                }
+                return color;
+            }
+
+            function uploadFile() {
+                const formData = new FormData(form);
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.status === 400) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'Bad Request');
+                        });
+                    } else if (response.status === 500) {
+                        throw new Error('Internal Server Error');
+                    } else if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = `/pdf_page/${encodeURIComponent(data.filename)}`;
+                        //window.location.href = `/pdf_page?file=${encodeURIComponent(data.filename)}`;
+                    } else {
+                        showError(data.error || 'An error occurred while uploading.');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 4000);
+                    }
+                })
+                .catch(error => {
+                    showError(error.message);
+                    setTimeout(() => {
+                        location.reload();
+                    }, 4000);
+                });
+            }
+
+            function showError(errorMessage) {
+                const loadingText = document.getElementById('loading-text');
+                loadingText.textContent = errorMessage;
+                loadingText.style.color = "red";
+                endText.style.display = "none";
+                setTimeout(() => {
+                    loadingText.style.color = "black";
+                    form.style.display = 'block';
+                    loadingMessage.style.display = 'none';
+                }, 5000);
+            }
+            
+            function updateChatItems(data) {
+                const chatHistoryContainer = document.querySelector('.chat-history-block-container');
+                const recentChatsContainer = document.getElementById('recent-chats-container');
+
+                // Remove the existing chat items
+                chatHistoryContainer.innerHTML = '';
+
+                // Add the updated chat items (maximum 3)
+                data.recent_chats.slice(0, 3).forEach(chat => {
+                    const chatItem = `
+                        <div class="recent-chat">
+                            <div style="display: flex;">
+                                <a style="font-weight: bold; flex-shrink: 1; min-width: 0px; word-break: break-all;" href="/pdf_page/${encodeURIComponent(chat.file_name)}">${chat.file_name}</a>
+                                <i style="height: 18px; margin-left: auto; color: rgb(204, 204, 204); margin-top: 2px; cursor: pointer;" class="fa fa-times delete-icon" data-title="Delete Chat" data-chat-id="${chat.id}"></i>
+                            </div>
+                            <p class="ant-typography css-usln0u">${chat.summary.slice(0, 100)}${chat.summary.length > 100 ? '...' : ''}</p>
+                            <div>
+                                <span class="ant-typography ant-typography-secondary css-usln0u" style="font-style: normal; font-size: 12px;" data-title="${chat.timestamp}">${chat.time_ago}</span>
+                            </div>
+                        </div>
+                    `;
+                    chatHistoryContainer.insertAdjacentHTML('beforeend', chatItem);
+                });
+
+                // Update the "See more" link visibility
+                const seeMoreLink = document.querySelector('.see-more');
+                if (data.recent_chats.length > 3 && seeMoreLink) {
+                    seeMoreLink.style.display = 'block';
+                } else if (data.recent_chats.length <= 3 && seeMoreLink) {
+                    seeMoreLink.style.display = 'none';
+                }
+
+                // Hide the chat container if there are no recent chats left
+                if (data.recent_chats.length === 0) {
+                    recentChatsContainer.style.display = 'none';
+                } else {
+                    recentChatsContainer.style.display = 'block';
+                }
+            }
+
+            deleteIcons.forEach(icon => {
+                icon.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    const chatId = this.dataset.chatId;
+                    const recentChat = this.closest('.recent-chat');
+                    recentChat.classList.add('deleting');
+
+                    // Make an AJAX request to delete the chat
+                    fetch(`/delete_chat/${chatId}`, {
+                        method: 'POST',
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            updateChatItems(data);
+
+                            // Re-attach event listeners to the new delete icons
+                            const newDeleteIcons = document.querySelectorAll('.delete-icon');
+                            newDeleteIcons.forEach(icon => {
+                                icon.addEventListener('click', function (event) {
+                                    event.preventDefault();
+                                    const chatId = this.dataset.chatId;
+                                    // Make an AJAX request to delete the chat
+                                    fetch(`/delete_chat/${chatId}`, {
+                                        method: 'POST',
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            updateChatItems(data);
+
+                                            // Re-attach event listeners to the new delete icons
+                                            const newestDeleteIcons = document.querySelectorAll('.delete-icon');
+                                            newestDeleteIcons.forEach(icon => {
+                                                icon.addEventListener('click', function (event) {
+                                                    event.preventDefault();
+                                                    const chatId = this.dataset.chatId;
+                                                    // Make an AJAX request to delete the chat
+                                                    fetch(`/delete_chat/${chatId}`, {
+                                                        method: 'POST',
+                                                    })
+                                                    .then(response => response.json())
+                                                    .then(data => {
+                                                        if (data.success) {
+                                                            updateChatItems(data);
+                                                        } else {
+                                                            console.error('Error deleting chat:', data.error);
+                                                        }
+                                                    })
+                                                    .catch(error => {
+                                                        console.error('Error deleting chat:', error);
+                                                    });
+                                                });
+                                            });
+                                        } else {
+                                            console.error('Error deleting chat:', data.error);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Error deleting chat:', error);
+                                    });
+                                });
+                            });
+                        } else {
+                            console.error('Error deleting chat:', data.error);
+                            recentChat.classList.remove('deleting');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting chat:', error);
+                        recentChat.classList.remove('deleting');
+                    });
+                });
+            });
+        });
+    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <script>
+        setTimeout(function() {
+          $('.alert').fadeOut('slow');
+        }, 3000); // 3 seconds
+    </script>
+</head>
+<body>
+    <div class="allcontAI">
+        <picture>
+            <source type="image/avif" srcset="{{ url_for('static', filename='img/StudyBotbg.avif') }}">
+            <img loading="lazy" src="{{ url_for('static', filename='img/StudyBotbg.avif') }}" width="100%" height="100%" style="position:fixed;z-index:-1">
+        </picture>
+        <div style="padding:12px; display: flex;justify-content: center; flex-direction: column; align-items: center;">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+            <header style="margin:36px 0 36px;display:flex;flex-direction:column;align-items:center" class="translate landing-header">
+                <h1 class="ant-typography landing-header-title css-usln0u" style="font-weight:600;font-size:46px;text-align:center;padding:0;margin:0;margin-bottom:12px">Chat with any PDF</h1>
+                <span class="ant-typography ant-typography-secondary landing-subtitle css-usln0u" style="text-align:center;display:block;margin-bottom:0;font-size:20px;max-width:530px">Join millions of students, researchers and professionals to instantly answer questions and understand research with AI</span>
+            </header>
+            <div class="ant-card ant-card-bordered css-usln0u" style="max-width:993px; width: 100%; margin:0 auto; border-radius:12px;">
+                <div class="ant-card-body" style="padding:8px">
+                    <span class="ant-upload-wrapper css-usln0u">
+                        <div class="css-usln0u ant-upload ant-upload-drag" style="padding:16px 0">
+                            <form action="/upload" method="post" enctype="multipart/form-data">
+                                <span tabindex="0" class="ant-upload ant-upload-btn" role="button" class="form">
+                                    <input type="file" id="file" name="file" accept=".pdf" style="display:none;">
+                                    <label for="file" style="cursor: pointer;" class="ant-upload-drag-container">
+                                        <p class="ant-upload-drag-icon" style="clear:both">
+                                            <span role="img" aria-label="inbox" class="anticon anticon-inbox">
+                                                <svg viewBox="0 0 1024 1024" focusable="false" data-icon="inbox" width="1em" height="1em" fill="currentColor" aria-hidden="true">
+                                                    <path d="M885.2 446.3l-.2-.8-112.2-285.1c-5-16.1-19.9-27.2-36.8-27.2H281.2c-17 0-32.1 11.3-36.9 27.6L139.4 443l-.3.7-.2.8c-1.3 4.9-1.7 9.9-1 14.8-.1 1.6-.2 3.2-.2 4.8V830a60.9 60.9 0 0060.8 60.8h627.2c33.5 0 60.8-27.3 60.9-60.8V464.1c0-1.3 0-2.6-.1-3.7.4-4.9 0-9.6-1.3-14.1zm-295.8-43l-.3 15.7c-.8 44.9-31.8 75.1-77.1 75.1-22.1 0-41.1-7.1-54.8-20.6S436 441.2 435.6 419l-.3-15.7H229.5L309 210h399.2l81.7 193.3H589.4zm-375 76.8h157.3c24.3 57.1 76 90.8 140.4 90.8 33.7 0 65-9.4 90.3-27.2 22.2-15.6 39.5-37.4 50.7-63.6h156.5V814H214.4V480.1z">
+                                                    </path>
+                                                </svg>
+                                            </span>
+                                        </p>
+                                        <p class="ant-upload-text translate" style="font-weight:normal;margin-bottom:22px;margin-top:-10px">
+                                            <span class="mobile-only">Click to select PDF</span>
+                                            <span class="desktop-only">Drop PDF here</span>
+                                        </p>
+                                    </label>
+                                </span>
+                            </form>
+                            <p id="loading-message" style="display: none; margin: 1rem;">
+                                <span id="loading-text">Analyzing</span><span id="just-end-text"> your PDF. Please wait<span id="dots"></span></span>
+                            </p>
+                        </div>
+                    </span>
+                </div>
+            </div>
+            {% if recent_chats %}
+            <div class="ant-card ant-card-bordered css-usln0u" id="recent-chats-container" style="max-width: 993px; width: 100%; margin: 12px auto 0px;">             
+                <div class="ant-card-head">
+                    <div class="ant-card-head-wrapper">
+                        <div class="ant-card-head-title">My Chats</div>
+                    </div>
+                </div>
+                <div class="ant-card-body" style="padding-top: 8px;">
+                    <div class="chat-history-block-container">
+                        {% for recent_chat in recent_chats[:3] %}
+                        <div class="recent-chat">
+                            <div style="display: flex;">
+                                <a style="font-weight: bold; flex-shrink: 1; min-width: 0px; word-break: break-all;" href="{{ url_for('pdf_page', file=recent_chat.file_name) }}">{{ recent_chat.file_name }}</a>
+                                <i style="height: 18px; margin-left: auto; color: rgb(204, 204, 204); margin-top: 2px; cursor: pointer;" class="fa fa-times delete-icon" data-title="Delete Chat" data-chat-id="{{ recent_chat.id }}"></i>
+                            </div>
+                            <p class="ant-typography css-usln0u">
+                                {% if recent_chat.latest_response %}
+                                    {{ recent_chat.latest_response[:100] }}{% if recent_chat.latest_response|length > 100 %}...{% endif %}
+                                {% elif recent_chat.summary %}
+                                    {{ recent_chat.summary[:100] }}{% if recent_chat.summary|length > 100 %}...{% endif %}
+                                {% else %}
+                                    No response or summary available
+                                {% endif %}
+                            </p>
+                            <div>
+                                <span class="ant-typography ant-typography-secondary css-usln0u" style="font-style: normal; font-size: 12px;" data-title="{{ recent_chat.timestamp }}">{{ recent_chat.time_ago }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if total_pdfs > 3 %}
+                    <div class="see-more">
+                        <a href="{{ url_for('pdf_page', file=recent_chats[3].file_name) }}">See more...</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            <div style="display:flex;flex-direction:column;align-items:center" class="translate">
+                <h2 style="margin-top:48px;margin-bottom:8px">StudyBot in a Nutshell</h2>
+                <span class="ant-typography ant-typography-secondary css-usln0u" style="text-align:center;display:block;margin-bottom:32px;font-size:18px">Your PDF AI - like ChatGPT but for PDFs. Summarize and answer questions for free.</span>
+                <div style="display:flex" class="blocks-responsive">
+                    <div class="ant-card ant-card-bordered css-usln0u" style="width:323px;margin-bottom:12px">
+                        <div class="ant-card-body">
+                            <h2 style="display:flex;gap:8px;align-items:center;margin:4px 0 16px">
+                                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 256 256" height="26px" width="26px" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M227.79,52.62l-96-32a11.85,11.85,0,0,0-7.58,0l-96,32A12,12,0,0,0,20,63.37,6.05,6.05,0,0,0,20,64v80a12,12,0,0,0,24,0V80.65l23.71,7.9a67.92,67.92,0,0,0,18.42,85A100.36,100.36,0,0,0,46,209.44a12,12,0,1,0,20.1,13.11C80.37,200.59,103,188,128,188s47.63,12.59,61.95,34.55a12,12,0,1,0,20.1-13.11,100.36,100.36,0,0,0-40.18-35.92,67.92,67.92,0,0,0,18.42-85l39.5-13.17a12,12,0,0,0,0-22.76Zm-99.79-8L186.05,64,128,83.35,70,64ZM172,120A44,44,0,1,1,90.94,96.29l33.27,11.09a11.89,11.89,0,0,0,7.58,0l33.27-11.09A43.85,43.85,0,0,1,172,120Z"></path>
+                                </svg>
+                                <span>For Students</span>
+                            </h2>
+                            Study for exams, get help with homework, and answer multiple choice questions effortlessly.
+                        </div>
+                    </div>
+                    <div class="ant-card ant-card-bordered css-usln0u" style="width:323px;margin-bottom:12px">
+                        <div class="ant-card-body">
+                            <h2 style="display:flex;gap:8px;align-items:center;margin:4px 0 16px">
+                                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" style="height:20px" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M160 320h12v16c0 8.84 7.16 16 16 16h40c8.84 0 16-7.16 16-16v-16h12c17.67 0 32-14.33 32-32V64c0-17.67-14.33-32-32-32V16c0-8.84-7.16-16-16-16h-64c-8.84 0-16 7.16-16 16v16c-17.67 0-32 14.33-32 32v224c0 17.67 14.33 32 32 32zm304 128h-1.29C493.24 413.99 512 369.2 512 320c0-105.88-86.12-192-192-192v64c70.58 0 128 57.42 128 128s-57.42 128-128 128H48c-26.51 0-48 21.49-48 48 0 8.84 7.16 16 16 16h480c8.84 0 16-7.16 16-16 0-26.51-21.49-48-48-48zm-360-32h208c4.42 0 8-3.58 8-8v-16c0-4.42-3.58-8-8-8H104c-4.42 0-8 3.58-8 8v16c0 4.42 3.58 8 8 8z">
+
+                                    </path>
+                                </svg>
+                                <span>For Researchers</span>
+                            </h2>
+                            Dive into scientific papers, academic articles, and books to get the information you need for your research.
+                        </div>
+                    </div>
+                    <div class="ant-card ant-card-bordered css-usln0u" style="width:323px;margin-bottom:12px">
+                        <div class="ant-card-body">
+                            <h2 style="display:flex;gap:8px;align-items:center;margin:4px 0 16px">
+                                <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none">
+
+                                    </path>
+                                    <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2">
+                                    </path>
+                                    <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z">
+                                    </path><path d="M9 17v-5"></path>
+                                    <path d="M12 17v-1"></path><path d="M15 17v-3"></path>
+                                </svg>
+                                <span>For Professionals</span>
+                            </h2>
+                            Navigate legal contracts, financial reports, manuals, and training material. Ask questions to any PDF for fast insights.
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex" class="blocks-responsive">
+                    <div class="ant-card ant-card-bordered css-usln0u" style="width:323px;margin-bottom:12px">
+                        <div class="ant-card-body">
+                            <h2 style="display:flex;gap:8px;align-items:center;margin:4px 0 16px">
+                                <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M15.5 2H8.6c-.4 0-.8.2-1.1.5-.3.3-.5.7-.5 1.1v12.8c0 .4.2.8.5 1.1.3.3.7.5 1.1.5h9.8c.4 0 .8-.2 1.1-.5.3-.3.5-.7.5-1.1V6.5L15.5 2z"></path>
+                                    <path d="M3 7.6v12.8c0 .4.2.8.5 1.1.3.3.7.5 1.1.5h9.8"></path><path d="M15 2v5h5"></path>
+                                </svg>
+                                <span>Multi-File Chats</span>
+                            </h2>
+                            Create folders to organize your files and chat with multiple PDFs in one single conversation.
+                        </div>
+                    </div>
+                    <div class="ant-card ant-card-bordered css-usln0u" style="width:323px;margin-bottom:12px">
+                        <div class="ant-card-body">
+                            <h2 style="display:flex;gap:8px;align-items:center;margin:4px 0 16px">
+                                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"></path><path d="M7.066 4.76A1.665 1.665 0 0 0 4 5.668a1.667 1.667 0 0 0 2.561 1.406c-.131.389-.375.804-.777 1.22a.417.417 0 1 0 .6.58c1.486-1.54 1.293-3.214.682-4.112zm4 0A1.665 1.665 0 0 0 8 5.668a1.667 1.667 0 0 0 2.561 1.406c-.131.389-.375.804-.777 1.22a.417.417 0 1 0 .6.58c1.486-1.54 1.293-3.214.682-4.112z"></path>
+                                </svg>
+                                <span>Cited Sources</span>
+                            </h2>
+                            Answers contain references to their source in the original PDF document. No more flipping pages.
+                        </div>
+                    </div>
+                    <div class="ant-card ant-card-bordered css-usln0u" style="width:323px;margin-bottom:12px">
+                        <div class="ant-card-body">
+                            <h2 style="display:flex;gap:8px;align-items:center;margin:4px 0 16px">
+                                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill="none" stroke-width="2" d="M12,23 C18.0751322,23 23,18.0751322 23,12 C23,5.92486775 18.0751322,1 12,1 C5.92486775,1 1,5.92486775 1,12 C1,18.0751322 5.92486775,23 12,23 Z M12,23 C15,23 16,18 16,12 C16,6 15,1 12,1 C9,1 8,6 8,12 C8,18 9,23 12,23 Z M2,16 L22,16 M2,8 L22,8"></path>
+                                </svg>
+                                <span>Any Language</span>
+                            </h2>
+                            Works worldwide! StudyBot accepts PDFs in any language and can chat in any language.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

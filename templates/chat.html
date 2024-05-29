@@ -1,0 +1,2761 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBot - Chat with PDF</title>
+    <link rel="icon" type="image/jpg" href="{{ url_for('static', filename='img/StudyBot.jpg') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.18/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/atom-one-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" integrity="sha384-wcIxkf4k558AjM3Yz3BBFQUbk/zgIYC2R0QpeeYb+TwlBVMrlgLqwRjRtGZiK7ww" crossorigin="anonymous">
+    <style>
+        
+        html,
+        body {
+            font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif,'Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol','Noto Color Emoji';
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-size: 14px;
+            overflow: hidden;
+        }
+
+        .hljs{
+            background: #000;
+        }
+
+        /* Toggle button styles */
+        .theme-toggle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px;
+            cursor: pointer;
+        }
+
+        .theme-toggle i {
+            font-size: 20px;
+            margin: 0 5px;
+            transition: color 0.3s;
+        }
+
+        .dark-mode-icon {
+            color: #888;
+            display: flex;
+        }
+
+        .light-mode-icon {
+            display: none;
+        }
+
+        .dark-mode .dark-mode-icon {
+            display: none;
+        }
+
+        .dark-mode .light-mode-icon {
+            color: #ffcc00;
+            display: flex;
+        }
+
+        /* Dark mode styles */
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e6e6e6;
+        }
+
+        .dark-mode ::-webkit-scrollbar-track,
+        .dark-mode .StudyBotpage,
+        .dark-mode #sidebar,
+        .dark-mode .chats,
+        .dark-mode .pdf-container-header,
+        .dark-mode .chat-container-header {
+            background-color: #2c2c2c;
+            color: #e6e6e6;
+        }
+
+        .dark-mode .question{
+            background-color: #535353;
+            color: #e6e6e6;
+        }
+
+        .dark-mode .question:hover{
+            background-color: #6b6b6b;
+        }
+
+        .dark-mode .incoming {
+            background-color: #3e3e3e;
+            color: #e6e6e6;
+            border: 2px solid #555;
+        }
+
+        .dark-mode .pdf canvas {
+            padding: 0;   
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px 5px rgb(43 43 43 / 89%);
+        }
+
+        .dark-mode .countdown-timer{
+            color: #e6e6e6;
+            background-color: #555;
+        }
+
+        .countdown-timer {
+            position: absolute;
+            top: 2%;
+            left: 40%;
+            padding: 5px 10px;
+            margin: 5px 0px;
+            transform: translate(-50%, -50%);
+            color: #333;
+            background-color: #ccc;
+            display: none;
+            border-radius: 5px;
+            font-size: 16px;
+            z-index: 9999;
+        }
+
+        pre{
+            background: black;
+            color: #ddd;
+            border-radius: 0 0 10px 10px;
+            padding: 20px !important;
+        }
+
+        .code-container {
+            position: relative;
+            margin: 10px 0;
+        }
+
+        .code-container br{
+            display: none;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #797979;
+            color: #ccc;
+            padding: 5px 10px;
+            border-radius: 10px 10px 0 0;
+            font-family: monospace;
+        }
+
+        .language {
+            font-weight: bold;
+        }
+
+        .copy-code {
+            cursor: pointer;
+        }
+
+        code {
+            font-family: monospace;
+        }
+
+        .numbered-list {
+            list-style-type: decimal;
+            padding-left: 20px;
+        }
+
+        .numbered-item {
+            margin-bottom: 5px;
+        }
+
+        .alphabetical-list {
+            list-style-type: lower-alpha;
+            padding-left: 20px;
+        }
+
+        .alphabetical-item {
+            margin-bottom: 5px;
+        }
+        
+        .message.incoming .table-parent br {
+            display: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background:#eee;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #aaa;
+            border-radius: 8px;
+        }
+
+        .dark-mode ::-webkit-scrollbar-thumb {
+            background: #555;
+        }
+
+        .dark-mode ::-webkit-scrollbar-thumb:hover{
+            background: #777;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+
+        .errorcont {
+            position: absolute;
+            top:20px;
+            left: 50%;
+            height: 10%;
+            z-index: 60000000;
+        }
+
+        .alert-dismissible {
+            padding-right: 1rem;
+        }
+
+        #sidebar-panel{
+            height: 100%;
+            z-index: 10;
+        }
+
+        #sidebar {
+            height: inherit;
+            display: flex;
+            flex-direction: column;
+            background-color: rgb(0, 21, 41);
+            transition: 0.3s;
+        }
+
+        .upload-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .custom-file-upload {
+            display: inline-block;
+            padding: 6px 12px;
+            cursor: pointer;
+            background-color: #0074D9;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .custom-file-upload:hover {
+            background-color: #0056a9;
+        }
+
+        #content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        .h5, h5 {
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+
+        .spinnerForm {
+            position: absolute;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #000;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+            display: block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        .fade-out {
+            animation-name: fadeOut;
+            animation-duration: 1s;
+            animation-fill-mode: forwards;
+        }
+
+        .spinnerForm.error {
+            border-top-color: red;
+        }
+
+        .sider-button {
+            color: rgba(255, 255, 255, 0.65);
+            transition: all .2s;
+        }
+
+        .sider-button:hover{
+            color: #0074D9;
+        }
+
+        .pdf-link {
+            color: hsla(0, 0%, 100%, .65);
+            text-decoration: none;
+            display: flex;
+            border-radius: 8px;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 12px;
+            transition: color .3s;
+        }
+
+        .pdf-link:hover {
+            color: #fff;
+        }
+
+        .pdf-link.active {
+            background-color: #1677FF;
+            color: #fff;
+        }
+
+        .drop-container {
+            position: relative;
+            display: flex;
+            background: rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.8);
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 15px;
+            margin-top: 8px;
+            border-radius: 5px;
+            border: 1px dashed #ffffff;
+            cursor: pointer;
+            transition: background .2s ease-in-out, border .2s ease-in-out;
+        }
+
+        .drop-container:hover {
+            border-color: #1677FF;
+        }
+
+        .drop-container:hover .drop-title {
+            color: #eee;
+        }
+
+        .drop-title {
+            color: rgba(255,255,255,1);
+            font-size: 14px;
+            font-weight: 450;
+            text-align: center;
+            transition: color .2s ease-in-out;
+        }
+
+        .chat {
+            display:flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chat a {
+            color: #4870df;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .message.outgoing a{
+            color: #fff;
+            font-weight: normal;
+        }
+
+        .chat-container {
+            margin: 0;
+            padding: 10px;
+            overflow: hidden;
+            overflow-y: auto;
+            height: 90%;
+            scroll-behavior: smooth;
+            transition: 0.3s;
+        }
+
+        .dark-mode .chat-loader{
+            background-color: #333;
+        }
+
+        /* ... */
+        .chat-loader {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            pointer-events: none;
+        }
+
+        .chat-loader .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-left-color: #000;
+            border-top-color: #000;
+            animation: spin 0.5s linear infinite;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+        /* ... */
+
+        /* Style the chat messages */
+        #chat-history-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .scroll-down-button {
+            position: absolute;
+            bottom: 55px;
+            right: 50%;
+            padding: 7px;
+            background-color: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.5s;
+            z-index: 5;
+        }
+
+        .scroll-down-button i {
+            font-size: 12px;
+        }
+        
+        p {
+            margin: 0;
+            padding: 7px;
+            overflow-x: auto;
+            line-height: 1.6em;
+        }
+
+        p p{
+            padding: 0px;
+        }
+
+        p table {
+            --tw-border-spacing-x: 0px;
+            --tw-border-spacing-y: 0px;
+            border-collapse: separate;
+            border-spacing: var(--tw-border-spacing-x) var(--tw-border-spacing-y);
+            margin-bottom: .25rem;
+            margin-top: .25rem;
+            width: 100%;
+        }
+
+        p :where(p>:last-child){
+            margin-bottom: 0;
+        }
+
+        p :where(table) {
+            line-height: 1.7142857;
+            margin-bottom: 2em;
+            margin-top: 2em;
+            table-layout: auto;
+            text-align: left;
+            width: 100%;
+        }
+        
+        p :where(thead) {
+            border-bottom-color:#4B5584;
+            border-bottom-width: 1px;
+        }
+        
+        p :where(thead th) {
+            color: var(--tw-prose-headings);
+            font-weight: 600;
+            padding-bottom: .5714286em;
+            padding-left: .5714286em;
+            padding-right: .5714286em;
+            vertical-align: bottom;
+        }
+        
+        p :where(thead th:first-child) {
+            padding-left: 0;
+        }
+
+        p :where(tbody tr) {
+            border-bottom-color: #374151;
+            border-bottom-width: 1px;
+        }
+        
+        p :where(tbody td) {
+            vertical-align: baseline;
+        }
+
+        p table th:first-child {
+            border-top-left-radius: .375rem;
+        }
+
+        p table th:last-child {
+            border-right-width: 1px;
+            border-top-right-radius: .375rem;
+        }
+
+        .dark-mode p table th {
+            background-color: rgb(255 255 255 / 30%);
+            border-color: rgb(255 255 255 / 50%);
+        }
+
+        p table th {
+            background-color: rgba(0,0,0,.1);
+            border-bottom-width: 1px;
+            border-color: rgba(0, 0, 0, .15);
+            border-left-width: 1px;
+            border-top-width: 1px;
+            padding: .25rem .75rem;
+        }
+
+        .dark-mode p td{
+            border-color: rgb(145 145 145 / 50%);
+        }
+
+        p td {
+            border-bottom-width: 1px;
+            border-color: rgba(0, 0, 0, .15);
+            border-left-width: 1px;
+            padding: .25rem .75rem;
+        }
+
+        p :where(tbody td:first-child,tfoot td:first-child) {
+            padding-left: 0;
+        }
+
+        p :where(tbody td,tfoot td) {
+            padding: .5714286em;
+        }
+
+        p td:last-child {
+            border-right-width: 1px;
+        }
+
+        p :where(tbody td:last-child,tfoot td:last-child) {
+            padding-right: 0;
+        }
+
+        div:where(.css-usln0u).ant-typography, :where(.css-usln0u).ant-typography p {
+            margin-bottom: 1em;
+        }
+
+        :where(.css-usln0u).ant-typography {
+            color: rgba(0, 0, 0, 0.88);
+            word-break: break-word;
+            line-height: 1.5714285714285714;
+        }
+    
+        :where(.css-usln0u).ant-typography {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .message {
+            padding: 0px 15px;
+            border-radius: 10px;
+            max-width: 90%;
+            line-height: 1.8em;
+            word-wrap: break-word;
+            transition: 0.3s;
+        }
+
+        .incoming {
+            position: relative;
+            background-color: #f9f9f9;
+            align-self: flex-start;
+            border: 2px solid #efefef;
+        }
+
+        .incoming p table{
+            margin: 10px 0;
+        }
+
+        .clipboard-icon {
+            position: absolute !important;
+            top: 5px;
+            right: 5px;
+            width: 1em;
+            height: 1em;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .outgoing {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+        }
+        /* Add this to your existing CSS */
+        .bubble-loader {
+            position:absolute;
+            display: none;
+            bottom: 48px;
+            right: 20px;
+            width: 10px;
+            height: 10px;
+            background-color: #0e6fe6;
+            border-radius: 50%;
+            animation: bubble 0.5s ease-in-out infinite;
+        }
+
+        @keyframes bubble {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-18px);
+            }
+        }
+
+        /* Style the input container */
+        .input-container {
+            display: flex;
+            justify-content: center;
+        }
+        
+        :where(.css-usln0u).ant-space-compact {
+            display: inline-flex;
+        }
+
+        :where(.css-usln0u).ant-input-outlined:focus, :where(.css-usln0u).ant-input-outlined:focus-within {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+            outline: 0;
+            background-color: #ffffff;
+        }
+
+        :where(.css-usln0u).ant-input:placeholder-shown {
+            text-overflow: ellipsis;
+        }
+
+        textarea:where(.css-usln0u).ant-input {
+            max-width: 100%;
+            height: auto;
+            min-height: 32px;
+            line-height: 1.5714285714285714;
+            vertical-align: bottom;
+            transition: all 0.3s, height 0s;
+            resize: vertical;
+        }
+
+        .dark-mode :where(.css-usln0u).ant-input-outlined {
+            background: #333;
+            border-color: #888;
+            color: #ddd;
+        }
+
+        :where(.css-usln0u).ant-input-outlined {
+            background: #ffffff;
+            border-width: 1px;
+            border-style: solid;
+            border-color: #d9d9d9;
+        }
+
+        :where(.css-usln0u).ant-input {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 4px 11px;
+            color: rgba(0, 0, 0, 0.88);
+            font-size: 14px;
+            line-height: 1.5714285714285714;
+            list-style: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            min-width: 0;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        :where(.css-usln0u)[class^="ant-input"], :where(.css-usln0u)[class*=" ant-input"] {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .blinking-message {
+            position: relative;
+            padding-top: 10px;
+            color: #33333396;
+            border-radius: 5px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            animation: blink 1s infinite;
+            z-index: 9999;
+        }
+
+        @keyframes blink {
+            0% {
+                opacity: 0.5;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.5;
+            }
+        }
+
+        .dark-mode .blinking-message {
+            color: #ddddddb4;
+        }
+
+        .pdf {
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+            font-size: 13px;
+            transition: 0.3s;
+        }
+
+        .pdf canvas {
+            display: block; 
+            margin:5px 10px;
+            box-shadow:0px 1px 10px 0px rgba(0,0,0,0.2);
+        }
+
+        .pdf.pdf-cont-open {
+            width: 50%;
+        }
+
+        #pdf-container {
+            position: relative;
+            height: 95%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pdf-container-header, .chat-container-header {
+            font-family: Roboto, system-ui, sans-serif;
+            color: rgba(0,0,0,0.65);
+            align-items: center;
+            display: flex;
+            padding: 10px;
+            height: 5%;
+        }
+
+        .dark-mode .pdf-loader{
+            background-color: #333;
+        }
+
+        .folder-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .folder {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .folder-name {
+            font-weight: bold;
+        }
+
+        .folder-drop-container {
+            width: 100%;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .folder-drop-container.active {
+            border-color: #007bff;
+        }
+
+        .pdf-list {
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed #ccc;
+            min-height: 100px;
+            margin-top: 10px;
+        }
+
+        .pdf-list.active {
+            border-color: #007bff;
+        }
+
+        .pdf-item {
+            cursor: move;
+        }
+
+        .folder-viewer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .folder-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .folder-info {
+            text-align: center;
+        }
+
+        .pdf-dropdown {
+            margin-left: 10px;
+        }
+
+        .pdf-loader {
+            position: absolute;
+            top:0;
+            left:0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            pointer-events: none;
+        }
+
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-left-color: #000;
+            border-top-color: #000;
+            animation: spin 0.5s linear infinite;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .currentpagenumber {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .dark-mode .currentpagenumber>input{
+            background: #555;
+            color: #fff;
+        }
+
+        .currentpagenumber>input {
+            height: unset;
+            width: 40px;
+            text-align: center;
+            border: none;
+            background: #eee;
+            padding: 0 7px;
+            border-radius: 4px;
+            color: rgba(0,0,0,.88);
+            font-size: 14px;
+            line-height: 1.5714285714285714;
+            transition: all .2s;
+        }
+
+        .page-number-inline {
+            border-radius: 24px;
+            cursor: pointer;
+            color: rgb(255, 255, 255) !important;
+            background:rgb(103 146 205);
+            padding: 2px 6px;
+            font-size: 12px;
+            font-weight: normal;
+            user-select: none;
+        }
+
+        .page-number-inline:hover {
+            background:rgb(79, 123, 185);
+        }
+
+        i.fa {
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .dark-mode .vertical-line{
+            background-color: #444;
+        }
+
+        .vertical-line{
+            background: rgb(238, 238, 238); 
+            width: 4px; 
+            height: 100%;
+        }
+    
+        .vertical-line:hover {
+            cursor: ew-resize;
+        }
+
+        .suggested-questions {
+            margin-bottom: 15px;
+        }
+
+        .question {
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .question:hover {
+            background-color: #e0e0e0;
+        }
+
+        .question i {
+            margin: 0 5px 0 10px;
+            color: #007bff;
+            font-size: 18px;
+        }
+
+        .chats {
+            position: relative;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: auto;
+            transition: 0.3s;
+        }
+
+        .chats.chat-cont-open {
+            width: 50%;
+        }
+
+        .pagefind {
+            transition:0.3s;
+            border:0;
+        }
+
+        .pagefind:focus, .pagefind:hover {
+            border: 2px solid #996aff;
+            outline: none;
+        }
+
+        .input-container textarea:hover, .input-container textarea:focus {
+            border: 1px solid #007bff;
+            outline: none;
+        }
+
+        .scrollable-section {
+            max-height: 45%; /* Adjust as needed */
+            overflow-y: auto;
+            padding-right: 5px;
+            margin-bottom: 10px;
+        }
+
+        .input-container button {
+            padding: 4px 15px;
+            background-color: #007bff;
+            height: inherit;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            border-bottom-left-radius: 0px;
+            border-top-left-radius: 0px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .icon-container i {
+            font-size:1.2rem;
+            color: rgba(255, 255, 255, 0.65);
+            cursor: pointer;
+
+        }
+
+        .swal2-container {
+            z-index: 10000000000; /* Increase the z-index value */
+        }
+
+        .chat-desktop-icons {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .chat-mobile-icons {
+            display: none;
+        }
+
+        #close-sidebar {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.65);
+            cursor: pointer;
+            display: none;
+        }
+
+        @media (max-width: 767.98px) { 
+            .pdf {
+                display: none;
+            }
+
+            #close-sidebar {
+                display: block;
+            }
+
+            #sidebar-panel {
+                position: fixed;  
+                width: 0px;
+                transition: left 0.3s ease-in-out;
+            }
+
+            #sidebar-panel.sidebar-closed {
+                display: block !important;
+                width: 100%;
+            }
+
+            .sider-button-cont{
+                display:none;
+            }
+
+            .chats {
+                width: 100%;
+            }
+
+            .chat-desktop-icons {
+                display: none;
+            }
+
+            .chat-mobile-icons {
+                display: flex;
+                align-items: center;
+                width: 100%;
+            }
+
+            .chat-container-header .fa-bars {
+                font-size: 20px;
+                margin-right: 10px;
+                cursor: pointer;
+            }
+
+            .chat-title {
+                margin: 0;
+                flex-grow: 1;
+                font-size: 18px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .vertical-menu {
+                position: relative;
+            }
+
+            .vertical-menu-toggle {
+                background: none;
+                border: none;
+                font-size: 20px;
+                cursor: pointer;
+            }
+
+            .vertical-menu-items {
+                display: none;
+                position: absolute;
+                right: 0;
+                width: max-content;
+                background-color: #ffffff;
+                background-clip: padding-box;
+                box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+                padding: 12px;
+                z-index: 10089;
+                opacity: 0;
+                transform: scale(0.8);
+                transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+            }
+
+            .vertical-menu.open .vertical-menu-items {
+                display: block;
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            .vertical-menu-items button {
+                width: 100%;
+                padding: 10px;
+                color: rgba(0, 0, 0, 0.88);
+                text-align: left;
+                background: none;
+                border: none;
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                justify-content: flex-start;
+                cursor: pointer;
+            }
+
+            .dark-mode .vertical-menu-toggle{
+                color: rgba(233, 233, 233, 0.88);
+            }
+
+            .dark-mode .vertical-menu-items{
+                background-color: rgba(32, 32, 32, 0.88);
+            }
+
+            .dark-mode .vertical-menu-items button{
+                color: rgba(233, 233, 233, 0.88);
+            }
+        }
+
+    </style>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" integrity="sha384-hIoBPJpTUs74ddyc4bFZSM1TVlQDA60VBbJS0oA934VSz82sBx1X7kSx2ATBDIyd" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false},
+        {left: '\\[', right: '\\]', display: true}
+      ],
+      throwOnError: false
+    });"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.worker.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/anchorme/dist/browser/anchorme.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@2.3.4/dist/purify.min.js"></script>
+    <script> 
+        
+        function showMessageBox(message, icon = 'success') {
+            Swal.fire({
+                icon: icon,
+                title: message,
+                showConfirmButton: false,
+                timer: 2000
+
+            });
+        }
+
+        window.onload = function() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function scrollToBottom() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function scrollToPage(pageNumber) {
+            const targetCanvas = document.querySelectorAll('canvas')[pageNumber - 1];
+            if (targetCanvas) {
+                targetCanvas.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+
+            tippy.delegate('body', {
+                target: '[data-title]',
+                content: reference => reference.getAttribute('data-title'),
+                arrow: true,
+                delay: [50, 0], // Delay in showing and hiding the tooltip
+                animation: 'scale' // Animation effect
+            });
+
+            const dropContainer = document.getElementById('dropcontainer');
+            const form = document.getElementById('uploadForm');
+            const spinner = document.getElementById('spinnerForm');
+            const errorMessage = document.getElementById('errorMessage');
+            const modalOverlay = document.getElementById('modalOverlay');
+
+            dropContainer.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+
+            dropContainer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files[0];
+                handleFile(file);
+            });
+
+            form.querySelector('input[type="file"]').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                handleFile(file);
+            });
+
+            errorMessage.addEventListener('click', () => {
+                errorMessage.style.display = 'none';
+            });
+
+            function handleFile(file) {
+                if (file.type === 'application/pdf') {
+                    spinner.style.display = 'block';
+                    modalOverlay.style.display = 'block';
+                    uploadFile(file);
+                } else {
+                    showMessageBox('Only PDF files are accepted. Please try again.', 'error')
+                }
+            }
+
+            function uploadFile() {
+                const formData = new FormData(form);
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        showMessageBox('Network response was not ok', 'error')
+                    }
+                    return response.text();  // First, try to get the response as text
+                })
+                .then(text => {
+                    try {
+                        // Attempt to parse the text as JSON
+                        return JSON.parse(text);
+                    } catch (error) {
+                        // If parsing fails, throw an error
+                        showMessageBox('Invalid JSON response from server', 'error')
+                    }
+                })
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = `/pdf_page/${encodeURIComponent(data.filename)}`;
+                    } else {
+                        showMessageBox(data.error, 'error')
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error); // Log the error for debugging
+                    showMessageBox('Invalid PDF or is already existing I guess🤨. \nTry again.', 'error')
+                    setTimeout(() => {
+                        location.reload();
+                    }, 4000);
+                });
+            }
+
+            function showError(errorText) {
+                spinner.style.display = 'none';
+                errorMessage.textContent = errorText;
+                errorMessage.style.display = 'block';
+                setTimeout(() => {
+                    errorMessage.classList.add('fade-out');
+                    setTimeout(() => {
+                        errorMessage.style.display = 'none';
+                        errorMessage.classList.remove('fade-out');
+                        modalOverlay.style.display = 'none';
+                    }, 1000); // 1 second for the fade-out animation to complete
+                }, 2000); // 2 seconds before starting the fade-out
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const pdfLinks = document.querySelectorAll('.pdf-link');
+
+            pdfLinks.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    
+                    // Reset the styling of all links
+                    pdfLinks.forEach(pdfLink => {
+                        pdfLink.classList.remove('active');
+                    });
+
+                    // Apply styling to the clicked link
+                    link.classList.add('active');
+                    
+                    // Call the fetchPdfAndRedirect function
+                    fetchPdfAndRedirect(link.textContent.trim());
+                });
+            });
+        });
+
+        function fetchPdfAndRedirect(fileName, pdf_id) {
+            let filePath = `/pdf_page/${encodeURIComponent(fileName)}`;
+
+            fetch(filePath)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    window.location.href = filePath;
+                })
+                .catch(error => {
+                    console.error('Error fetching PDF:', error);
+                    alert('An error occurred while fetching the PDF. Please try again.');
+                });
+
+            // Reset the active state of all PDF links
+            const pdfLinks = document.querySelectorAll('.pdf-link');
+            pdfLinks.forEach(link => link.classList.remove('active'));
+
+            // Set the active state for the clicked PDF link
+            const clickedLink = document.querySelector(`.pdf-link[data-pdf-id="${pdf_id}"]`);
+            if (clickedLink) {
+                clickedLink.classList.add('active');
+            }
+        }
+
+        function sendPdfRequest(file_name) {
+            // Set the title dynamically
+            document.title = `StudyBot - ${file_name}`;
+            // Redirect to the /pdf_page route with the file_name as a query parameter
+            window.location.href = `/pdf_page/${encodeURIComponent(file_name)}`;
+        }
+    </script>
+        <!--// icon effects-->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const themeToggle = document.querySelector('.theme-toggle');
+            const body = document.body;
+            const darkModeIcon = document.getElementById('dark-mode-icon');
+            const lightModeIcon = document.getElementById('light-mode-icon');
+
+            // Function to set the theme based on the user's preference
+            function setTheme(mode) {
+                if (mode === 'dark') {
+                    body.classList.add('dark-mode');
+                    darkModeIcon.style.display = "none";
+                    lightModeIcon.style.display = "flex";
+                } else {
+                    body.classList.remove('dark-mode');
+                    darkModeIcon.style.display = "flex";
+                    lightModeIcon.style.display = "none";
+                }
+            }
+
+            // Function to get the user's preferred theme mode from localStorage
+            function getPreferredTheme() {
+                return localStorage.getItem('preferredTheme') || 'light';
+            }
+
+            // Set the initial theme based on the user's preference
+            setTheme(getPreferredTheme());
+
+            // Event listener for the theme toggle button
+            themeToggle.addEventListener('click', () => {
+                const mode = body.classList.contains('dark-mode') ? 'light' : 'dark';
+                setTheme(mode);
+                localStorage.setItem('preferredTheme', mode);
+            });
+
+            const folderButton = document.querySelector('.sider-button');
+            const folderContainer = document.querySelector('.folder-container');
+            const pdfList = document.querySelector('.pdf-list');
+            const folderDropContainers = document.querySelectorAll('.folder-drop-container');
+            const pdfDropdown = document.querySelector('.pdf-dropdown');
+
+            // JavaScript code for icon functionality
+            const renameChatIcon = document.querySelectorAll('#rename');
+            const exportChatIcon = document.querySelectorAll('#export');
+            const resetChatIcon = document.querySelectorAll('#reset');
+            const deleteChatIcon = document.querySelectorAll('#delete');
+            const emptyChatIcon = document.getElementById('forempty');
+            const boxup = document.querySelector('.ant-message');
+            const pdf_id = {{ pdf_id }};
+
+            function ensurePDFExtension(fileName) {
+                if (!fileName.toLowerCase().endsWith('.pdf')) {
+                    return fileName + '.pdf';
+                }
+                return fileName;
+            }
+
+            renameChatIcon.forEach(icon => {
+                icon.addEventListener('click', () => {
+                    Swal.fire({
+                        title: 'Rename Chat',
+                        input: 'text',
+                        inputPlaceholder: 'Enter the new name',
+                        showCancelButton: true,
+                        confirmButtonText: 'Rename',
+                        cancelButtonText: 'Cancel',
+                        inputValidator: (value) => {
+                            if (!value) {
+                                return 'Please enter a new name';
+                            }
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            const newFileName = ensurePDFExtension(result.value);
+                            // Make an AJAX call to rename the PDF
+                            $.ajax({
+                                url: `/rename_pdf/${pdf_id}`,
+                                method: 'POST',
+                                data: {
+                                    new_name: newFileName
+                                },
+                                success: function(response) {
+                                    if (response.success) {
+                                        // Update the chat or pdf name on the frontend
+                                        document.querySelector('.pdf-container-header .PDFName').innerText = newFileName;
+                                        const pdfLinkActive = document.querySelectorAll('.pdf-link.active');
+                                        pdfLinkActive.forEach(link => {
+                                            const spanElement = link.querySelector('span');
+                                            if (spanElement) {
+                                                spanElement.innerText = newFileName;
+                                            }
+                                        });
+                                        showMessageBox('PDF renamed successfully!', 'success');
+                                        window.location.href = `/pdf_page/${response.new_file_name}`;
+                                    } else {
+                                        showMessageBox(response.error, 'error');
+                                    }
+                                },
+                                error: function(jqXHR, textStatus, errorThrown) {
+                                    console.error("AJAX Error:", textStatus, errorThrown);
+                                    showMessageBox('An error occurred: ' + textStatus, 'error');
+                                    setTimeout(() => {
+                                        location.reload();
+                                    }, 500);
+                                }
+                            });
+                        }
+                    });
+                });
+            });
+
+            resetChatIcon.forEach(icon => {
+                icon.addEventListener('click', () => {
+                    Swal.fire({
+                        title: 'Reset Chat',
+                        text: 'Are you sure you want to reset the chat?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, reset it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.ajax({
+                                url: `/reset_chats/${pdf_id}`,
+                                method: 'POST',
+                                success: function(response) {
+                                    if (response.success) {
+                                        document.querySelector('#chat-messages').innerHTML = '';
+                                        emptyChatIcon.style.display = "flex";
+                                        showMessageBox('Chat Cleared!', 'success');
+                                        location.reload();
+                                    } else {
+                                        showMessageBox(response.error, 'error');
+                                        location.reload();
+                                    }
+                                },
+                                error: function() {
+                                    showMessageBox('An error occurred while resetting the chats.', 'error');
+                                    setTimeout(() => {
+                                        location.reload();
+                                    }, 500);
+                                }
+                            });
+                        }
+                    });
+                });
+            });
+
+            deleteChatIcon.forEach(icon => {
+                icon.addEventListener('click', () => {
+                    Swal.fire({
+                        title: 'Delete Chat',
+                        text: 'This will permanently delete the chat and PDF content.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.ajax({
+                                url: `/delete_pdf_and_chats/${pdf_id}`,
+                                method: 'POST',
+                                success: function(response) {
+                                    if (response.success) {
+                                        document.querySelector('#chat-messages').innerHTML = '';
+                                        emptyChatIcon.style.display = "flex";
+                                        showMessageBox("Chat Deleted successfully", 'success');
+                                        if ('next_pdf' in response) {
+                                            // Redirect to the next available PDF
+                                            window.location.href = `/pdf_page/${response.next_pdf}`;
+                                        } else if ('no_pdfs_left' in response) {
+                                            // Redirect to the upload page if no PDFs are left
+                                            window.location.href = '/upload';
+                                        }
+                                    } else {
+                                        showMessageBox(response.error, 'error');
+                                        setTimeout(() => {
+                                            location.reload();
+                                        }, 500);
+                                    }
+                                },
+                                error: function() {
+                                    showMessageBox('An error occurred while deleting the PDF and chats.', 'error');
+                                    setTimeout(() => {
+                                        location.reload();
+                                    }, 500);
+                                }
+                            });
+                        }
+                    });
+                });
+            });
+
+            // Export Chat
+            exportChatIcon.forEach(icon => {
+                icon.addEventListener('click', () => {
+                    const messages = Array.from(document.querySelectorAll('#chat-messages .message'))
+                        .map(message => {
+                            if (message.classList.contains('incoming')) {
+                                return `StudyBot: ${message.textContent.trim()}`;
+                            } else if (message.classList.contains('outgoing')) {
+                                return `Me: ${message.textContent.trim()}`;
+                            }
+                        })
+                        .join('\n');
+
+                    if (messages.length > 0) {
+                        const blob = new Blob([messages], { type: 'text/plain' });
+                        const url = URL.createObjectURL(blob);
+
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = `${document.querySelector('.PDFName').innerText.trim()}_chat.txt`;
+                        document.body.appendChild(a);
+                        a.click();
+
+                        URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        showMessageBox('Exported', 'success');
+                    }
+                    else {
+                        showMessageBox('No chats', 'info');
+                    }
+                });
+            });
+
+            // draggable width
+            const leftLine = document.getElementById("vertical-line-left");
+            const rightLine = document.getElementById("vertical-line-right");
+            const pdfPanel = document.querySelector(".pdf");
+            const sidebarPanel = document.getElementById("sidebar-panel");
+            const chatPanel = document.querySelector(".chats");
+
+            let isDraggingLeft = false;
+            let isDraggingRight = false;
+            let initialMouseX;
+            let initialSidebarFlex;
+            let initialChatFlex;
+            let initialPdfFlex;
+
+            leftLine.addEventListener("mousedown", startDraggingLeft);
+            rightLine.addEventListener("mousedown", startDraggingRight);
+            document.addEventListener("mousemove", handleDragging);
+            document.addEventListener("mouseup", stopDragging);
+
+            function startDraggingLeft(event) {
+                isDraggingLeft = true;
+                initialMouseX = event.clientX;
+                initialSidebarFlex = parseFloat(sidebarPanel.style.flex.split(' ')[0]);
+                document.body.style.cursor = "ew-resize";
+                document.body.style.userSelect = "none";
+            }
+
+            function startDraggingRight(event) {
+                isDraggingRight = true;
+                initialMouseX = event.clientX;
+                initialChatFlex = parseFloat(chatPanel.style.flex.split(' ')[0]);
+                initialPdfFlex = parseFloat(pdfPanel.style.flex.split(' ')[0]);
+                document.body.style.cursor = "ew-resize";
+                document.body.style.userSelect = "none";
+            }
+
+            function handleDragging(event) {
+                if (isDraggingLeft) {
+                    const diffX = event.clientX - initialMouseX;
+                    const newSidebarFlex = Math.min(Math.max(initialSidebarFlex + diffX * 0.1, 10), 52);
+                    
+                    sidebarPanel.style.flex = `${newSidebarFlex} 1 0px`;
+                } else if (isDraggingRight) {
+                    const diffX = event.clientX - initialMouseX;
+                    const totalFlex = initialChatFlex + initialPdfFlex;
+                    const newChatFlex = Math.min(Math.max(initialChatFlex + diffX * 0.1, 11), 53);
+                    const newPdfFlex = Math.min(Math.max(totalFlex - newChatFlex, 11), 53);
+
+                    chatPanel.style.flex = `${newChatFlex} 1 0px`;
+                    pdfPanel.style.flex = `${newPdfFlex} 1 0px`;
+                }
+            }
+
+            function stopDragging() {
+                isDraggingLeft = false;
+                isDraggingRight = false;
+                document.body.style.cursor = "default";
+                document.body.style.userSelect = "auto";
+            }
+
+            // Declare variables for PDF handling
+            let pdfDocument = null;
+            let totalPageCount = 0;
+            const pdfContainer = document.querySelector('.pdf');
+            const pdfCont = document.getElementById('pdf-container');
+            const zoomInIcon = document.getElementById('zoomin');
+            const zoomOutIcon = document.getElementById('zoomout');
+            const resetZoomIcon = document.getElementById('resetzoom');
+            const currentPageInput = document.querySelector('input[data-testid="page-navigation__current-page-input"]');
+            const totalPageSpan = document.querySelector('.totalpagenumber');
+            let originalCanvasWidth = null;
+
+            // Default zoom factor and page number
+            let zoomFactor = 1;
+            let currentPage = 1;
+            let renderedPages = [];
+
+            // Disable zoom controls initially
+            zoomInIcon.disabled = true;
+            zoomOutIcon.disabled = true;
+            resetZoomIcon.disabled = true;
+
+            function enableZoomControls() {
+                zoomInIcon.disabled = false;
+                zoomOutIcon.disabled = false;
+                resetZoomIcon.disabled = false;
+            }
+
+            function disableZoomControls() {
+                zoomInIcon.disabled = true;
+                zoomOutIcon.disabled = true;
+                resetZoomIcon.disabled = true;
+            }
+
+            // Zoom in functionality
+            zoomInIcon.addEventListener('click', () => {
+                zoomFactor += 0.1;
+                renderPDFAtScale(zoomFactor);
+            });
+
+            // Zoom out functionality
+            zoomOutIcon.addEventListener('click', () => {
+                zoomFactor = Math.max(zoomFactor - 0.1, 0.1);
+                renderPDFAtScale(zoomFactor);
+            });
+
+            // Update the reset zoom function
+            resetZoomIcon.addEventListener('click', function() {
+                // Re-render the PDF at default scale
+                renderPDFAtScale(zoomFactor);
+                zoomFactor = 1; // Reset the zoom factor
+                const allCanvasElements = document.querySelectorAll('canvas');
+                allCanvasElements.forEach(canvas => {
+                    canvas.style.width = '90%'; // Reset the CSS width
+                    canvas.width = originalCanvasWidth; // Reset the actual pixel width
+                });
+                renderPDFAtScale(zoomFactor); // Re-render the PDF
+            });
+
+            disableZoomControls();
+
+            // Function to get the current page number based on the scroll position
+            function getCurrentPage() {
+                const allCanvasElements = document.querySelectorAll('canvas');
+                let maxVisibleHeight = 0;
+                let currentPage = 1;
+
+                for (let i = 0; i < allCanvasElements.length; i++) {
+                    const rect = allCanvasElements[i].getBoundingClientRect();
+                    const visibleHeight = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+
+                    if (visibleHeight > maxVisibleHeight) {
+                        maxVisibleHeight = visibleHeight;
+                        currentPage = i + 1;
+                    }
+                }
+
+                return currentPage;
+            }
+
+            // Attach a keydown event listener to the page number input
+            currentPageInput.addEventListener("keydown", function(event) {
+                if (event.key === "Enter") {
+                    event.preventDefault(); // Prevent the default Enter key behavior
+
+                    const enteredPageNum = parseInt(event.target.value, 10);
+
+                    // Check if the entered page number is valid
+                    if (enteredPageNum > 0 && enteredPageNum <= totalPageCount) {
+                        const targetCanvas = document.querySelectorAll('canvas')[enteredPageNum - 1];
+                        if (targetCanvas) {
+                            targetCanvas.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    } else {
+                        // If not valid, reset the input value to the current page number
+                        event.target.value = getCurrentPage();
+                    }
+                }
+            });
+
+            // Event listener for when the user changes the input value
+            currentPageInput.addEventListener('change', function(event) {
+                const enteredPageNum = parseInt(event.target.value, 10);
+
+                // Check if the entered page number is valid
+                if (enteredPageNum > 0 && enteredPageNum <= totalPageCount) {
+                    const targetCanvas = document.querySelectorAll('canvas')[enteredPageNum - 1];
+                    if (targetCanvas) {
+                        targetCanvas.scrollIntoView({ behavior: 'smooth' });
+                    }
+                } else {
+                    // If not valid, reset the input value to the current page number
+                    event.target.value = getCurrentPage();
+                }
+            });
+
+            // Open/Close sidebar functionality
+            const openCloseIcon = document.querySelectorAll('#openclose');
+            const closeSidebarIcon = document.getElementById('close-sidebar');
+
+            openCloseIcon.forEach(icon => {
+                icon.addEventListener('click', () => {
+            
+                    sidebarPanel.classList.toggle('sidebar-closed');
+                    
+                    if (sidebarPanel.classList.contains('sidebar-closed')) {
+                        sidebarPanel.style.display = 'none';
+                    } else {
+                        sidebarPanel.style.display = '';
+                    }
+                });
+            });
+
+            closeSidebarIcon.addEventListener('click', () => {
+                sidebarPanel.classList.remove('sidebar-closed');
+            });
+
+            const searchIcon = document.getElementById('searchIcon');
+
+            searchIcon.addEventListener('click', () => {
+                Swal.fire({
+                    title: 'Search PDF',
+                    input: 'text',
+                    inputPlaceholder: 'Enter the search query',
+                    showCancelButton: true,
+                    confirmButtonText: 'Search',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const searchQuery = result.value;
+                        searchPDF(searchQuery);
+                    }
+                });
+            });
+
+            async function searchPDF(query) {
+                if (!pdfDocument) return;
+
+                const matches = [];
+
+                for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+                    const page = await pdfDocument.getPage(pageNum);
+                    const content = await page.getTextContent();
+                    const pageMatches = content.items.filter(item => item.str.toLowerCase().includes(query.toLowerCase()));
+
+                    if (pageMatches.length > 0) {
+                        matches.push({ page: pageNum, matches: pageMatches });
+                    }
+                }
+
+                if (matches.length > 0) {
+                    // Scroll to the first match
+                    const firstMatch = matches[0];
+                    const targetCanvas = document.querySelectorAll('canvas')[firstMatch.page - 1];
+                    if (targetCanvas) {
+                        targetCanvas.scrollIntoView({ behavior: 'smooth' });
+                    }
+                } else {
+                    showMessageBox('No matches found', 'info');
+                }
+            }
+
+            // Show the loader while the PDF is loading
+            const pdfLoader = document.querySelector('.pdf-loader');
+            pdfLoader.style.display = 'flex';
+            pdfCont.style.overflow = "hidden";
+
+            // Initialize PDF.js
+            const pdfjsLib = window['pdfjs-dist/build/pdf'];
+
+            // Asynchronous function to load the PDF file
+            async function loadPDF(url) {
+                try {
+                    // Get the PDF document
+                    pdfDocument = await pdfjsLib.getDocument(url).promise;
+
+                    // Set total page count
+                    totalPageCount = pdfDocument.numPages;
+                    totalPageSpan.textContent = `${totalPageCount}`;
+
+                    // Render the PDF at the default scale
+                    renderPDFAtScale(1);
+                } catch (error) {
+                    console.error('Error loading PDF:', error);
+                } finally {
+                    // Hide the loader when the PDF is loaded or if an error occurs
+                    pdfLoader.style.display = 'none';
+                    pdfCont.style.overflow = "auto";
+                }
+            }
+
+            function isInViewport(element) {
+                const rect = element.getBoundingClientRect();
+                const elemTop = rect.top;
+                const elemBottom = rect.bottom;
+                const elemHeight = rect.height;
+
+                // Check if at least half of the element is in view
+                const isVisible = (elemTop + elemHeight * 0.5 >= 0) && (elemBottom - elemHeight * 0.5 <= window.innerHeight);
+                return isVisible;
+            }
+
+            // Map to store rendering tasks for each page
+            const renderingTasks = new Map();
+
+            // Asynchronous function to render the PDF at a specific scale
+            async function renderPDFAtScale(scale) {
+                if (!pdfDocument) return;
+
+                // Disable zoom controls while rendering
+                disableZoomControls();
+
+                // Show the loader
+                pdfLoader.style.display = 'flex';
+                pdfCont.style.overflow = "hidden";
+
+                const allCanvasElements = document.querySelectorAll('canvas');
+
+                for (let pageNum = 1; pageNum <= totalPageCount; pageNum++) {
+                    let canvas = allCanvasElements[pageNum - 1];
+
+                    if (!canvas) {
+                        canvas = document.createElement('canvas');
+                        pdfCont.appendChild(canvas);
+                    }
+
+                    if (!originalCanvasWidth) {
+                        originalCanvasWidth = canvas.width;
+                    }
+
+                    canvas.style.width = `${90 * scale}%`;
+
+                    const page = await pdfDocument.getPage(pageNum);
+                    const canvasContext = canvas.getContext('2d');
+
+                    if (renderingTasks.has(pageNum)) {
+                        renderingTasks.get(pageNum).cancel();
+                    }
+
+                    const viewport = page.getViewport({ scale: scale });
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+
+                    const renderTask = page.render({ canvasContext, viewport });
+                    renderingTasks.set(pageNum, renderTask);
+
+                    try {
+                        await renderTask.promise;
+                        renderedPages.push(pageNum);
+                    } catch (error) {
+                        if (error.name !== 'RenderingCancelledException') {
+                            console.error('Error rendering page:', error);
+                            showMessageBox('Error rendering page', 'error')
+                        }
+                    }
+                }
+
+                // Hide the loader once rendering is complete
+                pdfLoader.style.display = 'none';
+                pdfCont.style.overflow = "auto";
+
+                // Enable zoom controls after rendering
+                enableZoomControls();
+            }
+            // Attach a scroll event listener to the PDF container to handle lazy rendering
+            pdfCont.addEventListener('scroll', () => {
+                currentPageInput.value = getCurrentPage();
+            });
+
+            // Call the loadPDF function with the correct URL of the PDF file
+            loadPDF(`/static/pdfs/${encodeURIComponent('{{ new_file }}')}`);
+
+            const chatMessages = document.getElementById("chat-messages");
+            const chatMessagesCont = document.getElementById("chat-container");
+            const userMessageInput = document.getElementById("user-message");
+            const sendButton = document.getElementById("send-button");
+
+            // Fetch chat history from the server when the page loads
+            fetchChatHistoryFromServer(pdf_id);
+
+            userMessageInput.addEventListener("keydown", event => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    sendButton.click();
+                }
+            });
+
+            let countdownInterval;
+            const MAX_RESPONSE_TIME = 60000; // 120 seconds in milliseconds
+
+            function startCountdown() {
+                let timeRemaining = MAX_RESPONSE_TIME;
+                const countdownElement = document.createElement('div');
+                countdownElement.textContent = `${formatTime(timeRemaining)}`;
+                countdownElement.classList.add('countdown-timer');
+                document.body.appendChild(countdownElement);
+
+                countdownInterval = setInterval(() => {
+                    timeRemaining -= 1000;
+                    countdownElement.textContent = `${formatTime(timeRemaining)}`;
+
+                    if (timeRemaining <= 0) {
+                        clearInterval(countdownInterval);
+                        showMessageBox('Response took too long. Refreshing the page...', 'error')
+                        setTimeout(() => {
+                            location.reload();
+                            countdownElement.remove();
+                        }, 2000);
+                    }
+                }, 1000);
+            }
+
+            function formatTime(ms) {
+                const seconds = Math.floor((ms / 1000) % 60);
+                const minutes = Math.floor((ms / (1000 * 60)) % 60);
+                return `${minutes}:${String(seconds).padStart(2, '0')}`;
+            }
+
+            // Function to adjust the height of the textarea based on its content
+            function adjustTextareaHeight() {
+                userMessageInput.style.height = "30px";
+                userMessageInput.style.height = `${Math.min(userMessageInput.scrollHeight, 296)}px`;
+            }
+
+            // Attach the adjustTextareaHeight function to the input event of the textarea
+            userMessageInput.addEventListener("input", adjustTextareaHeight);
+            adjustTextareaHeight();
+
+            sendButton.addEventListener("click", () => {
+                const userMessage = userMessageInput.value.trim();
+                if (userMessage !== "") {
+                    document.getElementById("bubble-loader").style.display = "block";
+                    adjustTextareaHeight();
+                    disableSendButton();
+                    emptyChatIcon.style.display = "none";
+                    displayMessage(userMessage, "outgoing", document.getElementById("chat-history-container"));
+                    userMessageInput.value = "";
+                    sendUserMessage(userMessage, '{{ new_file }}');
+                }
+            });
+
+            function applyFormatting(message) {
+
+                // Syntax highlighting using highlight.js
+                document.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+
+                let formattedMessage = message;
+
+                // Escape HTML special characters to prevent XSS and rendering issues
+                formattedMessage = formattedMessage
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+
+                // Math equation formatting using KaTeX
+                const mathContainer = document.createElement('div');
+                mathContainer.innerHTML = formattedMessage;
+
+                // Render inline equations
+                renderMathInElement(mathContainer, {
+                    delimiters: [
+                        { left: '\\[', right: '\\]', display: true },
+                        { left: '\\(', right: '\\)', display: false },
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false }
+                    ],
+                    throwOnError: false // set to true to see LaTeX errors
+                });
+                formattedMessage = mathContainer.innerHTML;
+
+                const renderer = new marked.Renderer();
+                renderer.code = function(code, language) {
+                    const languageClass = language ? ` class="language-${language}"` : '';
+                    return `<div class="code-container">
+                                <div class="code-header">
+                                    <span class="language">${language || 'Code'}</span>
+                                    <i class="fa fa-copy copy-code" data-title="Copy code"></i>
+                                </div>
+                                <pre><code${languageClass}>${code}</code></pre>
+                            </div>`;
+                };
+                
+                formattedMessage = marked.parse(formattedMessage, { renderer });
+
+                // Sanitize the HTML using DOMPurify
+                formattedMessage = DOMPurify.sanitize(formattedMessage, { ADD_ATTR: ['onclick'] });
+
+                // Automatically convert URLs and emails to clickable links using Anchorme.js
+                formattedMessage = anchorme({
+                    input: formattedMessage,
+                    options: {
+                        attributes: {
+                            target: "_blank",
+                            class: "detected-link"
+                        }
+                    }
+                });
+
+                // Format page number references as clickable links without code formatting
+                formattedMessage = formattedMessage.replace(/(?:Page|page|Pages|pages)\s?(\d+(?:(?:,\s?|\s?-\s?)\d+)*)/g, (match, pageNumbers) => {
+                    const pageNumberLinks = pageNumbers.split(/,\s?|\s?-\s?/).map(pageNumber => {
+                        return `<a class='page-number-inline' href='#page${pageNumber}' onclick='scrollToPage(${pageNumber})' data-title='Scroll to Page ${pageNumber}'>${pageNumber}</a>`;
+                    });
+                    return `Page ${pageNumberLinks.join(', ')}`;
+                });
+
+                return formattedMessage;
+            }
+
+            function displayMessage(message, type, container) {
+                const messageDiv = document.createElement("div");
+                messageDiv.className = "message " + type;
+
+                const messageContent = document.createElement("p");
+                if (type === "incoming") {
+                    messageContent.innerHTML = applyFormatting(message);
+                } else {
+                    messageContent.textContent = message;
+                }
+
+                messageDiv.appendChild(messageContent);
+
+                if (type === "incoming") {
+                    createClipboardIconForElement(messageDiv, message);
+                }
+
+                if (container) {
+                    container.appendChild(messageDiv);
+                    // Scroll to the bottom of the chat container
+                    chatMessagesCont.scrollTop = chatMessagesCont.scrollHeight;
+                }
+            }
+
+            function createClipboardIconForElement(element, message) {
+                if (element && element.appendChild) {
+                    const clipboardIcon = document.createElement("i");
+                    clipboardIcon.className = "fa fa-clipboard clipboard-icon";
+                    clipboardIcon.setAttribute("data-title", "Copy message");
+
+                    const clipboardTippy = tippy(clipboardIcon, {
+                        content: "Copy message",
+                        arrow: true,
+                        delay: [50, 0],
+                        animation: 'scale'
+                    });
+
+                    clipboardIcon.addEventListener("click", function () {
+                        copyToClipboard(message);
+                        clipboardIcon.className = "fa fa-check clipboard-icon";
+                        clipboardTippy.setContent("Copied!");
+                        setTimeout(function () {
+                            clipboardIcon.className = "fa fa-clipboard clipboard-icon";
+                            clipboardTippy.setContent("Copy message");
+                        }, 3000);
+                    });
+                    element.appendChild(clipboardIcon);
+                }
+            }
+
+            // Add clipboard icons for suggested questions and welcome message
+            const suggestedQuestionsContainer = document.getElementById("suggested-questions-container");
+            if (suggestedQuestionsContainer) {
+                const welcomeMessage = suggestedQuestionsContainer.querySelector(".message.incoming p").innerText;
+                createClipboardIconForElement(suggestedQuestionsContainer.querySelector(".message.incoming"), welcomeMessage);
+            }
+
+            document.addEventListener('click', (event) => {
+                if (event.target && event.target.classList && event.target.classList.contains('copy-code')) {
+                    const codeElement = event.target.closest('.code-container').querySelector('code');
+                    const code = codeElement.innerText;
+                    navigator.clipboard.writeText(code).then(() => {
+                        event.target.classList.remove('fa-copy');
+                        event.target.classList.add('fa-check');
+                        event.target.setAttribute("data-title", "Copied!");
+                        setTimeout(() => {
+                            event.target.classList.remove('fa-check');
+                            event.target.classList.add('fa-copy');
+                            event.target.setAttribute("data-title", "Copy code");
+                        }, 2000);
+                    });
+                }
+            });
+
+            function copyToClipboard(text) {
+                const tempInput = document.createElement("textarea");
+                tempInput.value = text;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+            }
+
+            if (chatMessages.innerHTML === "") {
+                emptyChatIcon.style.display = "flex";
+            }
+
+            function removeQuotes(message) {
+                return message.replace(/["\\\n]/g, '');
+            }
+
+            function clearChat() {
+                chatMessages.innerHTML = '';
+            }
+
+            function errormessagesandactions(){
+                document.getElementById("bubble-loader").style.display = "none";
+                sendButton.style.background = "#007bff";
+                sendButton.style.opacity = 1;
+                sendButton.style.cursor = "pointer";
+                sendButton.disabled = false;
+            }
+
+            const questionElements = document.querySelectorAll(".question");
+            questionElements.forEach(questionElement => {
+                questionElement.addEventListener("click", () => {
+                    const question = questionElement.dataset.question;
+                    askQuestion(question);
+                });
+            });
+
+            function askQuestion(question) {
+                const userMessageInput = document.getElementById("user-message");
+                userMessageInput.value = question;
+                const sendButton = document.getElementById("send-button");
+                sendButton.click();
+            }
+
+            function fetchChatHistoryFromServer(pdf_id) {
+                if (typeof pdf_id !== 'undefined' && pdf_id) {
+                    const chatLoader = document.getElementById('chat-loader');
+                    const chatMessages = document.getElementById('chat-messages');
+                    chatLoader.style.display = 'flex';
+                    chatMessages.style.display = 'none';
+
+                    fetch(`/get_chat_history/${pdf_id}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const chatHistoryContainer = document.getElementById('chat-history-container');
+                            chatHistoryContainer.innerHTML = ''; // Clear the chat history container
+                            
+                            if (data.messages.length === 0) {
+                                emptyChatIcon.style.display = "flex";
+                            } else {
+                                emptyChatIcon.style.display = "none";
+                            }
+
+                            // Access the 'messages' property of the response object
+                            const messages = data.messages;
+                            if (Array.isArray(messages)) {
+                                messages.forEach(message => {
+                                    displayMessage(message.content, message.role === "user" ? "outgoing" : "incoming", chatHistoryContainer);
+                                });
+                            } else {
+                                console.error("Received data's 'messages' property is not an array:", messages);
+                                showMessageBox('An error occurred!', 'error');
+                                errormessagesandactions();
+                            }
+
+                            // Check if suggested questions or welcome messages exist
+                            const suggestedQuestions = data.suggested_questions;
+                            const newWelcomeMessages = data.new_welcome_messages;
+                            if (messages.length === 0 && (!suggestedQuestions || suggestedQuestions.length === 0) && (!newWelcomeMessages || newWelcomeMessages.length === 0)) {
+                                emptyChatIcon.style.display = "flex";
+                            } else {
+                                emptyChatIcon.style.display = "none";
+                            }
+
+                            chatLoader.style.display = 'none';
+                            chatMessages.style.display = 'flex';
+                        })
+                        .catch(error => {
+                            console.error("Error fetching chat history:", error);
+                            showMessageBox('Error fetching chat history!', 'error');
+                            errormessagesandactions();
+                        });
+                } else {
+                    console.error("pdf_id is undefined!");
+                    showMessageBox('PDF is Invalid!', 'error');
+                    errormessagesandactions();
+                }
+            }
+
+            function sendUserMessage(message, currentPdfName) {
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", "/get", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                adjustTextareaHeight();
+
+                startCountdown();
+
+                const blinkingMessage = document.querySelector('.blinking-message');
+                let blinkingMessageTimeout;
+
+                let responseReceived = false;
+
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+                        responseReceived = true;
+                        blinkingMessage.style.display = 'none';
+                        clearTimeout(blinkingMessageTimeout);
+
+                        if (xhr.status === 200) {
+                            const responseData = JSON.parse(xhr.responseText);
+                            const actualMessage = responseData.response;
+                            displayTypewriterMessage(actualMessage, "incoming");
+
+                            errormessagesandactions();
+                            clearInterval(countdownInterval);
+                            const countdownElement = document.querySelector('.countdown-timer');
+                            if (countdownElement) {
+                                countdownElement.remove();
+                            }
+                        } else if (xhr.status === 500) {
+                            showMessageBox('An error occurred. Probably, check your internet connection!', 'error');
+                            errormessagesandactions();
+                            clearInterval(countdownInterval);
+                            const countdownElement = document.querySelector('.countdown-timer');
+                            if (countdownElement) {
+                                countdownElement.remove();
+                            }
+                            setTimeout(() => {
+                                location.reload();
+                            }, 2000);
+                        }
+                    }
+                };
+
+                blinkingMessageTimeout = setTimeout(() => {
+                    if (!responseReceived) {
+                        blinkingMessage.style.display = 'flex';
+                        chatMessages.scrollTo(0, chatMessages.scrollHeight);
+                        chatMessagesCont.scrollTop = chatMessagesCont.scrollHeight;
+                    }
+                }, 10000);
+
+                const data = {
+                    message: message,
+                    pdfName: currentPdfName
+                };
+
+                xhr.send(JSON.stringify(data));
+            }
+
+            function displayTypewriterMessage(message, type) {
+                const messageDiv = document.createElement("div");
+                messageDiv.className = "message " + type;
+
+                const messageContent = document.createElement("p");
+                messageContent.innerHTML = "";
+                messageDiv.appendChild(messageContent);
+
+                const chatHistoryContainer = document.getElementById("chat-history-container");
+                if (chatHistoryContainer) {
+                    chatHistoryContainer.appendChild(messageDiv);
+                }
+
+                if (type === "incoming") {
+                    createClipboardIconForElement(messageDiv, message);
+                }
+
+                let index = 0;
+                let htmlMessage = '';
+
+                const interval = setInterval(() => {
+                    htmlMessage += message.charAt(index); // Append character by character
+                    if (type === "incoming") {
+                        const formattedMessage = applyFormatting(htmlMessage);
+                        messageContent.innerHTML = formattedMessage;
+                    } else {
+                        // Escape HTML entities in outgoing messages
+                        messageContent.textContent = htmlMessage;
+                    }
+
+                    // Scroll to the bottom of the chat container
+                    chatMessagesCont.scrollTop = chatMessagesCont.scrollHeight;
+
+                    index++;
+                    adjustTextareaHeight();
+                    disableSendButton();
+
+                    if (index >= message.length) {
+                        clearInterval(interval);
+                        enableSendButton();
+                        chatMessagesCont.scrollTop = chatMessagesCont.scrollHeight;
+                        toggleScrollDownButton();
+                    }
+                    emptyChatIcon.style.display = "none";
+                    document.getElementById("chat-history-container").appendChild(messageDiv);
+                    chatMessagesCont.scrollTop = chatMessagesCont.scrollHeight;
+                }, 3);
+            }
+
+            function enableSendButton() {
+                sendButton.disabled = false;
+                sendButton.style.background = "#007bff";
+                sendButton.style.opacity = 1;
+                sendButton.style.cursor = "pointer";
+                adjustTextareaHeight();
+            }
+
+            function disableSendButton() {
+                sendButton.disabled = true;
+                sendButton.style.background = "grey";
+                sendButton.style.opacity = 0.7;
+                sendButton.style.cursor = "not-allowed";
+                adjustTextareaHeight();
+            }
+
+            function toggleScrollDownButton() {
+                const chatContainer = document.getElementById('chat-container');
+                const scrollDownButton = document.querySelector('.scroll-down-button');
+                const distanceFromBottom = 10; // Change this value to adjust the distance in pixels
+
+                const isNearBottom = chatContainer.scrollHeight - chatContainer.scrollTop <= chatContainer.clientHeight + distanceFromBottom;
+
+                if (!isNearBottom) {
+                    scrollDownButton.style.display = 'flex';
+                } else {
+                    scrollDownButton.style.display = 'none';
+                }
+            }
+
+            // Add event listeners
+            document.getElementById('chat-container').addEventListener('scroll', toggleScrollDownButton);
+            window.addEventListener('resize', toggleScrollDownButton);
+
+            // Scroll-down button event listener
+            const scrollDownButton = document.querySelector('.scroll-down-button');
+            scrollDownButton.addEventListener('click', scrollToBottom);
+
+            const verticalMenuToggle = document.querySelector('.vertical-menu-toggle');
+            const verticalMenu = document.querySelector('.vertical-menu');
+
+            verticalMenuToggle.addEventListener('click', () => {
+                verticalMenu.classList.toggle('open');
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!verticalMenu.contains(event.target)) {
+                    verticalMenu.classList.remove('open');
+                }
+            });
+
+
+            folderButton.addEventListener('click', () => {
+                Swal.fire({
+                    title: 'Create New Folder',
+                    html: `
+                        <input id="folder-name" class="swal2-input" placeholder="Folder Name" value="My Folder">
+                        <p>Use Folders to:</p>
+                        <ul>
+                            <li>Organize your files</li>
+                            <li>Chat with multiple files at the same time</li>
+                        </ul>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Create',
+                    preConfirm: () => {
+                        const folderName = document.getElementById('folder-name').value;
+                        return folderName;
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const folderName = result.value;
+                        createFolder(folderName);
+                    }
+                });
+            });
+
+            function createFolder(folderName) {
+                // Check if the folder name already exists
+                const existingFolders = document.querySelectorAll('.folder-name');
+                let isDuplicate = false;
+                existingFolders.forEach(folder => {
+                    if (folder.textContent === folderName) {
+                        isDuplicate = true;
+                    }
+                });
+
+                if (isDuplicate) {
+                    // Prompt the user to enter another folder name
+                    Swal.fire({
+                        title: 'Folder Name Exists',
+                        text: 'Please enter a unique folder name.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'OK'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Prompt the user to enter a new folder name
+                            createFolder(folderName);
+                        }
+                    });
+                } else {
+                    // Create a new folder element
+                    const folderElement = document.createElement('div');
+                    folderElement.classList.add('folder');
+                    folderElement.innerHTML = `
+                        <div class="folder-name">${folderName}</div>
+                        <div class="folder-drop-container">Drop PDF here</div>
+                    `;
+                    folderContainer.appendChild(folderElement);
+
+                    // Add event listeners for folder drop container
+                    const folderDropContainer = folderElement.querySelector('.folder-drop-container');
+                    folderDropContainer.addEventListener('dragover', handleDragOver);
+                    folderDropContainer.addEventListener('drop', handleDrop);
+                }
+
+                folderElement.addEventListener('click', () => {
+                    folderElement.classList.toggle('active');
+                    const folderDropContainer = folderElement.querySelector('.folder-drop-container');
+                    if (folderElement.classList.contains('active')) {
+                        folderDropContainer.style.display = 'block';
+                    } else {
+                        folderDropContainer.style.display = 'none';
+                    }
+                });
+
+            }
+
+            pdfList.addEventListener('dragover', handleDragOver);
+            pdfList.addEventListener('drop', handleDrop);
+
+            function handleDragOver(e) {
+                e.preventDefault();
+                e.target.classList.add('active');
+            }
+
+            function handleDrop(e) {
+                e.preventDefault();
+                e.target.classList.remove('active');
+
+                if (e.target.classList.contains('folder-drop-container')) {
+                    const pdfItem = document.querySelector('.pdf-item.dragging');
+                    if (pdfItem) {
+                        e.target.appendChild(pdfItem);
+                        pdfItem.classList.remove('dragging');
+                    }
+                } else if (e.target.classList.contains('pdf-list')) {
+                    const pdfItem = document.querySelector('.pdf-item.dragging');
+                    if (pdfItem) {
+                        e.target.appendChild(pdfItem);
+                        pdfItem.classList.remove('dragging');
+                    }
+                }
+            }
+
+            // Add event listeners for PDF items
+            const pdfItems = document.querySelectorAll('.pdf-item');
+            pdfItems.forEach(pdfItem => {
+                pdfItem.addEventListener('dragstart', handleDragStart);
+                pdfItem.addEventListener('dragend', handleDragEnd);
+            });
+
+            function handleDragStart(e) {
+                e.target.classList.add('dragging');
+            }
+
+            function handleDragEnd(e) {
+                e.target.classList.remove('dragging');
+            }
+
+            // Update chat section header for folders
+            const chatSectionHeader = document.querySelector('.chat-container-header h3');
+            if (chatSectionHeader) {
+                chatSectionHeader.textContent = 'Chat with Folder Name';
+            }
+
+            // Remove borders from PDF items
+            pdfItems.forEach(pdfItem => {
+                pdfItem.style.border = 'none';
+            });
+
+            // Hide zoom icons in PDF viewer section for folders
+            /*const zoomIcons = document.querySelectorAll('.pdf-container-header .icon-button2');
+            zoomIcons.forEach(icon => {
+                icon.style.display = 'none';
+            });*/
+
+        });
+    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.18/dist/sweetalert2.all.min.js"></script>
+    <script type="text/javascript">
+        setTimeout(function() {
+              $('.alert').fadeOut('slow');
+            }, 4000); // 4 seconds
+    </script>
+</head>
+
+<body>
+    <div class="errorcont">
+        <!-- for errors -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+    <div class="StudyBotpage" style="display: flex; flex-direction: row; height: 99.95%; overflow: hidden; width: 100vw;">
+        <div class="data-panel" data-panel="" data-panel-id=":r5:" data-panel-size="15.0" id="sidebar-panel" style="flex: 15 1 0px; overflow: hidden;">
+            <div id="sidebar">
+                <i id="close-sidebar">   
+                    <svg style="opacity: 0.5;" fill="#e8e8e8" height="24px" width="24px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 330 330" xml:space="preserve" stroke="#e8e8e8">
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                        <g id="SVGRepo_iconCarrier"> <path id="XMLID_92_" d="M111.213,165.004L250.607,25.607c5.858-5.858,5.858-15.355,0-21.213c-5.858-5.858-15.355-5.858-21.213,0.001 l-150,150.004C76.58,157.211,75,161.026,75,165.004c0,3.979,1.581,7.794,4.394,10.607l150,149.996 C232.322,328.536,236.161,330,240,330s7.678-1.464,10.607-4.394c5.858-5.858,5.858-15.355,0-21.213L111.213,165.004z"></path> </g>
+                    </svg>                   
+                </i>
+                <div class="sidecont" style="display: flex;flex-direction: column;justify-content: space-between;padding-right: 5px;">
+                    <form action="/upload" style="position:relative;" method="post" enctype="multipart/form-data" id="uploadForm">
+                        <div class="modal-overlay" id="modalOverlay" style="display: none;"></div>
+                        <label for="file" class="drop-container" id="dropcontainer">
+                            <span class="drop-title">+New Chat</span>
+                            Drop PDF here
+                            <div class="spinnerForm" id="spinnerForm" style="display: none;"></div>
+                            <input type="file" id="file" name="file" accept=".pdf" style="display:none;">
+                        </label>
+                        <div id="errorMessage" style="position:absolute;top: 5%;text-align: center;font-size: 12px;padding: 0px 5px;display:none;color: red;z-index: 333;"></div>
+                    </form>
+                </div>
+                <div class="sider-button-cont" style="margin: 10px 8px 0;">
+                    <div class="sider-button" style="display: flex; align-items: center; gap: 4px; border: 1px solid rgb(56, 87, 129); border-radius: 8px; background: none; padding: 10px 12px; font-size: 14px; text-align: center; cursor: pointer;">
+                        <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0;">
+                            <path d="M464,128H272L208,64H48A48,48,0,0,0,0,112V400a48,48,0,0,0,48,48H464a48,48,0,0,0,48-48V176A48,48,0,0,0,464,128ZM359.5,296a16,16,0,0,1-16,16h-64v64a16,16,0,0,1-16,16h-16a16,16,0,0,1-16-16V312h-64a16,16,0,0,1-16-16V280a16,16,0,0,1,16-16h64V200a16,16,0,0,1,16-16h16a16,16,0,0,1,16,16v64h64a16,16,0,0,1,16,16Z"></path>
+                        </svg>New Folder
+                    </div>
+                </div>
+                <div class="folder-container"></div>
+                <div class="pdf-list"></div>
+                <div class="filecont" style="margin: 10px 7px; overflow: auto; padding: 1px;">
+                    <div style="background: none; outline: none; border-radius: 8px;">
+                        {% for file_name in file_names %}
+                        <div class="pdf-item">
+                            <a href="#" class="pdf-link {% if file_name == new_file %}active{% endif %}" data-pdf-id="{{ loop.index }}" onclick="fetchPdfAndRedirect('{{ file_name }}', '{{ loop.index }}')">
+                                <i class="fa fa-commenting-o">&nbsp;</i><span id="pdfname" style="user-select: none; text-decoration: none; font-size: 14px; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">  {{ file_name }}</span>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="translate" style="margin-top: auto;">
+                    <div class="icon-container ant-typography sider-footer css-usln0u" style="margin: 8px 12px; display: flex; gap: 7px; align-items: center; justify-content: center; white-space: nowrap;">
+                        <a href="{{ url_for('upload') }}">
+                            <i class="fa fa-home" aria-hidden="true" data-title="Home"></i>
+                        </a>
+                        <div class="theme-toggle">
+                            <i class="fa fa-moon-o dark-mode-icon" id="dark-mode-icon" data-title="Dark Mode" data-tooltip="Switch to Dark Mode"></i>
+                            <i class="fa fa-lightbulb-o light-mode-icon" id="light-mode-icon" data-title="Light Mode" data-tooltip="Switch to Light Mode"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="vertical-line-left" data-panel-group-direction="horizontal" data-panel-group-id=":r4:" data-panel-resize-handle-enabled="true" data-panel-resize-handle-id=":r9:" role="separator" tabindex="0" aria-valuemax="79" aria-valuemin="11" aria-valuenow="35" aria-controls="data-panel-id-:r7:" style="cursor: ew-resize; touch-action: none; user-select: none;">
+            <div class="vertical-line">
+            </div>
+        </div>
+        <div class="chats" style="flex: 42.5 1 0px;">
+            <div class="chat-container-header">
+                <div class="chat-desktop-icons">
+                    <i class="fa fa-columns" id="openclose" data-title="Close/Open Sidebar" style="flex-shrink: 0;padding-top: 7px;font-size: 22px;padding-left: 10px;" aria-hidden="true"></i>
+                    <h3 style="font-size: 20px;margin-right: auto; padding-top:2%; font-weight: 500;text-overflow: ellipsis;white-space: nowrap;overflow: hidden;padding-left: 5px;">
+                        {% if folder_name %}
+                            Chat with {{ folder_name }}
+                        {% else %}
+                            Chat
+                        {% endif %}
+                    </h3>
+                    <i class="fa fa-pencil icon-button" data-title="Rename Chat" id="rename" style="font-size: 20px; margin-right: 12px; user-select: none;"></i>
+                    <i class="fa fa-download icon-button" data-title="Export Chat" id="export" style="font-size: 20px; margin-right: 12px; user-select: none;"></i>
+                    <i class="fa fa-undo icon-button" data-title="Reset Chat" id="reset" style="font-size: 16px; margin-right: 12px; user-select: none;"></i>
+                    <i class="fa fa-trash icon-button" data-title="Delete" id="delete" style="font-size: 20px; user-select: none;"></i>
+                </div>
+                <div class="chat-mobile-icons">
+                    <i class="fa fa-bars" id="openclose"></i>
+                    <h3 class="chat-title">Chat with <span class="pdf-name">{{ new_file }}</span></h3>
+                    <div class="vertical-menu">
+                        <button class="vertical-menu-toggle"><i class="fa fa-ellipsis-v"></i></button>
+                        <div class="vertical-menu-items">
+                            <button id="rename"><i class="fa fa-pencil icon-button"></i> Rename Chat</button>
+                            <button id="export"><i class="fa fa-download icon-button"></i> Export Chat</button>
+                            <button id="reset"><i class="fa fa-undo icon-button"></i> Reset Chat</button>
+                            <button id="delete"><i class="fa fa-trash icon-button"></i> Delete Chat</button>
+                        </div>
+                    </div>
+                </div>
+           </div>
+           <div class="chat-container" id="chat-container">
+                <div class="chat-loader" id="chat-loader">
+                    <div class="spinner"></div>
+                </div>
+                <div class="scroll-down-button">
+                    <i class="fa fa-arrow-down"></i>
+                </div>
+                <div class="forempty" id="forempty" style="position: relative; display:none; flex-direction: column; justify-content: center; align-items: center; font-size:14px; margin-top: 30px; opacity: 0.2; pointer-events: none;">
+                    <div class="descrIcon">
+                        <i class="fa fa-file-o" aria-hidden="true" style="font-size:50px;margin-bottom:5px;"></i>
+                    </div>
+                    <div class="descr">No data</div>
+                </div>
+                <div class="chat" id="chat-messages" style="display:none;">
+                    {% if suggested_questions and new_welcome_messages %}
+                    <div id="suggested-questions-container">
+                        <div class="message incoming">
+                            <div class="suggested-questions">
+                                <p>{{ new_welcome_messages|safe }}</p>
+                            </div>
+                            {% for question in suggested_questions %}
+                            <div class="question" data-question="{{ question }}">
+                                <i class="fa fa-question-circle"></i> <p>{{ question }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                   {% endif %}
+                   <div id="chat-history-container">
+                       {% for chat in chat_history %}
+                       <div class="message {% if chat.message %}outgoing{% else %}incoming{% endif %}">
+                           <p>{{ chat.message if chat.message else chat.response|safe }}</p>
+                       </div>
+                       {% endfor %}
+               
+                       {% if not chat_history %}
+                       <div class="message incoming">
+                           <p>Hello, how can I help you?</p>
+                       </div>
+                       {% endif %}
+                   </div>
+                   <div class="blinking-message">Searching PDF, please wait 😊...</div>
+               </div>
+           </div>
+           <div class="input-container">
+                <div class="ant-space-compact css-usln0u chat-input" style="margin: 12px 0px 16px; padding: 0px 12px; max-width: 768px; display: flex; flex-shrink: 0; flex-grow: 1; align-self: center;">
+                    <div class="bubble-loader" id="bubble-loader"></div>
+                    <textarea id="user-message" placeholder="Ask any question…" maxlength="2000" class="ant-input css-usln0u ant-input-outlined" style="border-top-right-radius: 0px; height: 32px; border-bottom-right-radius: 0px; border-right: none; resize: none; min-height: 32px; max-height: 296px;" autofocus></textarea>
+                    <button id="send-button">Send</button>
+                </div>
+           </div>
+        </div>
+        <div id="vertical-line-right" data-panel-group-direction="horizontal" data-panel-group-id=":r4:" data-panel-resize-handle-enabled="true" data-panel-resize-handle-id=":r9:" role="separator" tabindex="0" aria-valuemax="79" aria-valuemin="11" aria-valuenow="35" aria-controls="data-panel-id-:r7:" style="cursor: ew-resize; touch-action: none; user-select: none;">
+            <div class="vertical-line">
+            </div>
+        </div>
+        <div class="pdf" style="flex: 42.5 1 0px;">
+            <div class="pdf-container-header">
+                {% if folder_name %}
+                    <h3 class="PDFName" style="font-size: 18px;margin-right: auto;font-weight: 450; padding-top:2%; text-overflow: ellipsis;white-space: nowrap;overflow: hidden;padding-left: 15px;">{{ folder_name }}</h3>
+                {% else %}
+                    <h3 class="PDFName" style="font-size: 18px;margin-right: auto;font-weight: 450; padding-top:2%; text-overflow: ellipsis;white-space: nowrap;overflow: hidden;padding-left: 15px;">{{ new_file }}</h3>
+                    <i class="fa fa-plus icon-button2" id="zoomin" data-title="Zoom In" style="font-size: 20px; margin-left: 12px; user-select: none; flex-shrink: 0;" aria-hidden="true"> </i>
+                    <i class="fa fa-undo icon-button2" id="resetzoom" data-title="Reset Zoom" style="font-size: 16px;user-select: none;margin-left: 10px;margin-right: 12px;margin-right: 9px; ex-shrink: 0;" aria-hidden="true"></i>
+                    <i class="fa fa-minus icon-button2" id="zoomout" data-title="Zoom Out" style="font-size: 20px; user-select: none; flex-shrink: 0;" aria-hidden="true"> </i>
+                    <div style="margin-left: 8px; display: flex; flex-shrink: 0; align-items: center; font-size: 13px;">
+                        <span class="currentpagenumber">
+                            <input class="pagefind" type="text" data-testid="page-navigation__current-page-input" aria-label="Enter a page number" class="rpv-core__textbox" placeholder="" value="1">
+                        </span>
+                        <span class="dividesign" style="margin: 0px 3px;">/</span>
+                        <span class="totalpagenumber">1</span>
+                    </div>
+                    <i class="fa fa-search icon-button2" id="searchIcon" data-title="Search" style="font-size: 20px; margin-left: 12px; user-select: none; flex-shrink: 0;" aria-hidden="true"></i>
+                {% endif %}
+            </div>
+            <div id="pdf-container">
+                {% if folder_name %}
+                    {% if folder_pdfs %}
+                        <div class="folder-viewer">
+                            <i class="fa fa-folder folder-icon"></i>
+                            <div class="folder-info">
+                                <h3>Folder with {{ folder_pdfs|length }} files</h3>
+                                <select class="pdf-dropdown">
+                                    <option value="">Select PDF</option>
+                                    {% for pdf in folder_pdfs %}
+                                        <option value="{{ pdf.file_path }}">{{ pdf.file_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="folder-viewer">
+                            <i class="fa fa-folder folder-icon"></i>
+                            <div class="folder-info">
+                                <h3>Empty Folder</h3>
+                                <p>Drop PDFs here to add them to the folder.</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="pdf-loader">
+                        <div class="spinner"></div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
