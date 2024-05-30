@@ -38,8 +38,6 @@ app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "mysecret")
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///StudyBot.db'
 db = SQLAlchemy(app)
 
-print(f"StudyBot AI is running on http://localhost:5000")
-
 log_file = 'app.log'
 max_log_size = 100 * 1024  # 100 kB
 backup_count = 1
