@@ -9,6 +9,7 @@ import fitz
 import re
 import json
 import logging
+from logging import StreamHandler
 from logging.handlers import RotatingFileHandler
 from collections import deque
 import requests
@@ -47,9 +48,14 @@ handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 
+console_handler = StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(formatter)
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(handler)
+logger.addHandler(console_handler)
 
 GPT_MODEL_NAME = "gpt-4o"
 MAX_TOKENS = 500
